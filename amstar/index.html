@@ -1,2 +1,2035 @@
 <!DOCTYPE html>
-<html><head><meta http-equiv="refresh" content="0; url=../grade/"></head></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMSTAR 2 Appraisal Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root{
+  --bg:#F0F2F5;
+  --surface:#FFFFFF;
+  --border:#D8DFE8;
+  --ink:#111827;
+  --ink2:#374151;
+  --ink3:#6B7280;
+  --crit:#B91C1C;
+  --crit-lt:#FEF2F2;
+  --nc:#1D4ED8;
+  --nc-lt:#EFF6FF;
+  --yes:#15803D;
+  --yes-bg:#F0FDF4;
+  --yes-bd:#86EFAC;
+  --partial:#B45309;
+  --partial-bg:#FFFBEB;
+  --partial-bd:#FCD34D;
+  --no:#DC2626;
+  --no-bg:#FEF2F2;
+  --no-bd:#FCA5A5;
+  --na:#6D28D9;
+  --na-bg:#F5F3FF;
+  --na-bd:#C4B5FD;
+  --accent:#1E40AF;
+  --sidebar:#0F172A;
+  --sidebar2:#1E293B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'Noto Sans','Noto Sans TC',sans-serif;font-size:13px;line-height:1.55;color:var(--ink);background:var(--bg);height:100%;}
+
+/* ── LAYOUT ── */
+.shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:230px;min-width:230px;
+  background:var(--sidebar);
+  display:flex;flex-direction:column;
+  overflow:hidden;flex-shrink:0;
+}
+.sb-brand{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-brand h1{font-size:16px;font-weight:700;color:#F8FAFC;letter-spacing:.5px;}
+.sb-brand p{font-size:10px;color:rgba(255,255,255,.38);margin-top:3px;line-height:1.4;}
+
+.sb-meta{padding:10px 14px 6px;border-bottom:1px solid rgba(255,255,255,.06);}
+.ml{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;}
+.mi{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:5px 8px;font-size:11px;color:#E2E8F0;font-family:'Noto Sans','Noto Sans TC',sans-serif;outline:none;margin-bottom:6px;}
+.mi:focus{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.09);}
+.mi::placeholder{color:rgba(255,255,255,.22);}
+
+.sb-prog{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.pb{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:5px;}
+.pb-f{height:100%;background:#38BDF8;border-radius:2px;transition:width .3s;}
+.pb-t{font-size:10px;color:rgba(255,255,255,.38);margin-top:3px;}
+
+.sb-nav{flex:1;overflow-y:auto;padding:4px 0;}
+.sb-nav::-webkit-scrollbar{width:3px;}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px;}
+.ni{display:flex;align-items:center;gap:7px;padding:5px 14px;cursor:pointer;transition:background .1s;}
+.ni:hover{background:rgba(255,255,255,.05);}
+.ni.active{background:rgba(255,255,255,.08);}
+.ni-n{min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+.ni-n.cr{background:var(--crit);color:#fff;}
+.ni-n.nc{background:var(--nc);color:#fff;}
+.ni-txt{font-size:10px;color:rgba(255,255,255,.55);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;}
+.nb{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.nb-yes{background:#15803D;color:#fff;}
+.nb-partial{background:#B45309;color:#fff;}
+.nb-no{background:#DC2626;color:#fff;}
+.nb-na{background:#6D28D9;color:#fff;}
+.nb-p{background:rgba(255,255,255,.1);color:rgba(255,255,255,.35);}
+
+.sb-grade{padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);}
+.gl{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.gp{display:block;font-size:12px;font-weight:700;padding:6px 10px;border-radius:5px;text-align:center;width:100%;}
+.gp-h{background:#F0FDF4;color:#15803D;}
+.gp-m{background:#ECFDF5;color:#065F46;}
+.gp-l{background:#FFFBEB;color:#92400E;}
+.gp-cl{background:#FEF2F2;color:#991B1B;}
+.gp-nd{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);}
+.gs{font-size:10px;color:rgba(255,255,255,.38);margin-top:5px;line-height:1.4;}
+
+.sb-btns{padding:8px 14px 14px;display:flex;flex-direction:column;gap:6px;}
+.btn-ex{border:none;padding:8px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans','Noto Sans TC',sans-serif;transition:all .15s;width:100%;}
+.btn-poster{background:#38BDF8;color:#0C1A2E;}
+.btn-poster:hover{background:#7DD3FC;}
+.btn-reset{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);}
+.btn-reset:hover{background:rgba(255,255,255,.13);}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;padding:18px 20px;}
+.main::-webkit-scrollbar{width:5px;}
+.main::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px;}
+
+/* SECTION LABEL */
+.sec-label{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-left:2px;}
+
+/* QCARD */
+.qcard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:8px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+  scroll-margin-top:10px;
+  transition:box-shadow .15s;
+}
+.qcard:hover{box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.qcard.cr{border-left:3px solid var(--crit);}
+.qcard.nc{border-left:3px solid var(--nc);}
+
+/* HEADER */
+.qhdr{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:10px 13px 9px;
+  cursor:pointer;user-select:none;
+  transition:background .1s;
+}
+.qhdr:hover{background:#FAFBFC;}
+.qn{min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.cr .qn{background:var(--crit);color:#fff;}
+.nc .qn{background:var(--nc);color:#fff;}
+.qtw{flex:1;}
+.qen{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.4;font-family:'Noto Sans',sans-serif;}
+.qzh{font-size:11px;color:var(--ink3);margin-top:2px;font-family:'Noto Sans TC',sans-serif;}
+.qmeta{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;}
+.qtag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;}
+.qt-cr{background:var(--crit-lt);color:var(--crit);}
+.qt-nc{background:var(--nc-lt);color:var(--nc);}
+.qap{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px;}
+.qap-yes{background:var(--yes-bg);color:var(--yes);}
+.qap-partial{background:var(--partial-bg);color:var(--partial);}
+.qap-no{background:var(--no-bg);color:var(--no);}
+.qap-na{background:var(--na-bg);color:var(--na);}
+.qap-nd{background:#F3F4F6;color:#9CA3AF;}
+.chv{font-size:10px;color:var(--ink3);transition:transform .2s;flex-shrink:0;margin-top:3px;}
+.qcard.open .chv{transform:rotate(180deg);}
+
+/* BODY */
+.qbody{display:none;border-top:1px solid #F1F5F9;}
+.qcard.open .qbody{display:block;}
+
+/* CRITERIA (Chinese) */
+.crit-sec{padding:9px 13px;background:#FAFCFE;border-bottom:1px solid #F1F5F9;}
+.ctog{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:600;color:var(--accent);padding:2px 0;user-select:none;font-family:'Noto Sans TC',sans-serif;}
+.ctog-arr{font-size:8px;transition:transform .18s;}
+.ctog.open .ctog-arr{transform:rotate(90deg);}
+.cbody{display:none;margin-top:9px;}
+.ctog.open + .cbody{display:block;}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cgrid.s1{grid-template-columns:1fr;}
+.cbox{border-radius:5px;padding:9px 11px;border:.5px solid;}
+.cb-p{background:var(--partial-bg);border-color:var(--partial-bd);}
+.cb-y{background:var(--yes-bg);border-color:var(--yes-bd);}
+.cb-nrsi{background:#FFF7ED;border-color:#FED7AA;}
+.cblbl{font-size:9.5px;font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-family:'Noto Sans TC',sans-serif;}
+.cb-p .cblbl{color:var(--partial);}
+.cb-y .cblbl{color:var(--yes);}
+.cb-nrsi .cblbl{color:#9A3412;}
+.clist{list-style:none;}
+.clist li{font-size:11px;padding:2px 0 2px 12px;position:relative;line-height:1.5;color:var(--ink2);font-family:'Noto Sans TC',sans-serif;}
+.clist li::before{content:"□";position:absolute;left:0;font-size:9px;color:var(--ink3);}
+.cnote{font-size:10px;color:var(--ink3);font-style:italic;margin-top:4px;font-family:'Noto Sans TC',sans-serif;}
+.cdiv{border:none;border-top:1px dashed #E2E8F0;margin:7px 0;}
+
+/* ── ANSWER SECTION ── */
+/* Q9 special: two sub-sections */
+.ans-sec{border-bottom:1px solid #F1F5F9;}
+.ans-sub-label{font-size:10px;font-weight:700;padding:6px 13px 0;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-family:'Noto Sans',sans-serif;}
+.ans-row{padding:7px 13px 10px;display:flex;gap:6px;flex-wrap:wrap;}
+
+/* BUTTONS — exact per official form */
+.abtn{
+  border:1.5px solid var(--border);
+  background:#fff;
+  border-radius:5px;
+  padding:5px 13px;
+  font-size:12px;
+  font-weight:500;
+  cursor:pointer;
+  font-family:'Noto Sans','Noto Sans TC',sans-serif;
+  color:var(--ink2);
+  transition:all .12s;
+  white-space:nowrap;
+}
+.abtn:hover{border-color:var(--accent);color:var(--accent);}
+.abtn.sel-yes{background:var(--yes-bg);border-color:var(--yes);color:var(--yes);font-weight:700;}
+.abtn.sel-partial{background:var(--partial-bg);border-color:var(--partial);color:var(--partial);font-weight:700;}
+.abtn.sel-no{background:var(--no-bg);border-color:var(--no);color:var(--no);font-weight:700;}
+.abtn.sel-na{background:var(--na-bg);border-color:var(--na);color:var(--na);font-weight:700;}
+
+/* COMMENT */
+.cm-sec{padding:5px 13px 12px;}
+.cmlbl{font-size:9.5px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;font-family:'Noto Sans TC',sans-serif;}
+.cmta{
+  width:100%;border:1px solid var(--border);border-radius:5px;
+  padding:7px 9px;font-size:11.5px;
+  font-family:'Noto Sans TC','Noto Sans',sans-serif;
+  color:var(--ink);resize:vertical;min-height:48px;
+  background:#FAFCFE;outline:none;line-height:1.5;
+}
+.cmta:focus{border-color:var(--accent);background:#fff;}
+.cmta::placeholder{color:#CBD5E1;}
+
+/* POSTER SETTINGS */
+.settings-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:16px;margin-bottom:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.sp-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:12px;}
+.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.sp-row{display:flex;flex-direction:column;gap:3px;}
+.sp-lbl{font-size:9.5px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;}
+.sp-color{width:100%;height:30px;border:1px solid var(--border);border-radius:4px;padding:2px;cursor:pointer;background:transparent;}
+.sp-range{width:100%;cursor:pointer;margin-top:4px;}
+.sp-val{font-size:10px;color:var(--ink3);margin-top:1px;}
+.sp-check-row{display:flex;align-items:center;gap:6px;margin-top:14px;}
+.sp-check{width:14px;height:14px;cursor:pointer;}
+.btn-gen{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans','Noto Sans TC',sans-serif;margin-top:12px;}
+.btn-gen:hover{background:#1E3A8A;}
+
+#poster-wrap{display:none;margin-top:14px;}
+#poster-wrap.show{display:block;}
+#poster-canvas{border:1px solid var(--border);border-radius:6px;max-width:100%;cursor:pointer;display:block;}
+.dl-hint{font-size:10.5px;color:var(--ink3);margin-top:5px;text-align:center;}
+#offcanvas{position:absolute;left:-9999px;top:0;}
+
+.dl-btns{display:flex;gap:8px;margin-top:8px;}
+.dl-btn{border:none;padding:8px 20px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans','Noto Sans TC',sans-serif;background:var(--accent);color:#fff;transition:all .15s;}
+.dl-btn:hover{background:#1E3A8A;transform:translateY(-1px);}
+.dl-btn:last-child{background:#374151;color:#fff;}
+.dl-btn:last-child:hover{background:#111827;}
+
+/* ══ LANDING PAGE ══ */
+#landing{
+  position:fixed;inset:0;z-index:9999;
+  background:#F0F3F7;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+#landing.hidden{display:none;}
+.shell.hidden{display:none;}
+
+.lp-hero{
+  background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 100%);
+  padding:36px 48px 28px;flex-shrink:0;
+}
+.lp-hero h1{font-size:28px;font-weight:700;color:#F8FAFC;margin-bottom:4px;}
+.lp-hero p{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:0;}
+.lp-hero-sub{font-size:12px;color:rgba(255,255,255,.38);margin-top:8px;line-height:1.6;}
+
+.lp-body{
+  max-width:1100px;width:100%;margin:0 auto;
+  padding:28px 32px 48px;flex:1;
+}
+
+/* Info cards row */
+.lp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.lp-card{background:#fff;border:1px solid #D8DFE8;border-radius:10px;
+  padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.lp-card-icon{font-size:22px;margin-bottom:8px;}
+.lp-card h3{font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;}
+.lp-card p{font-size:11.5px;color:#6B7280;line-height:1.6;}
+
+/* Question table */
+.lp-section{margin-bottom:28px;}
+.lp-sec-title{font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+.lp-sec-title::after{content:"";flex:1;height:1px;background:#D8DFE8;}
+.q-table{width:100%;border-collapse:collapse;font-size:12px;
+  background:#fff;border-radius:8px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);border:1px solid #D8DFE8;}
+.q-table th{background:#0F172A;color:#F8FAFC;font-weight:600;
+  padding:9px 12px;text-align:left;font-size:11px;
+  text-transform:uppercase;letter-spacing:.05em;}
+.q-table td{padding:8px 12px;border-bottom:1px solid #F1F5F9;
+  vertical-align:top;line-height:1.5;color:#374151;}
+.q-table tr:last-child td{border-bottom:none;}
+.q-table tr:nth-child(even) td{background:#FAFBFC;}
+.q-table tr:hover td{background:#F0F7FF;}
+.qt-crit{display:inline-block;font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:3px;background:#FEF2F2;color:#B91C1C;
+  text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.qt-nc{display:inline-block;font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:3px;background:#EFF6FF;color:#1D4ED8;
+  text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.q-ans-opts{font-size:10.5px;color:#9CA3AF;}
+
+/* Grade table */
+.grade-table{width:100%;border-collapse:collapse;font-size:12px;
+  background:#fff;border-radius:8px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);border:1px solid #D8DFE8;}
+.grade-table th{background:#1E3A8A;color:#fff;padding:9px 14px;font-size:11px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.05em;text-align:left;}
+.grade-table td{padding:9px 14px;border-bottom:1px solid #F1F5F9;
+  font-size:12px;line-height:1.5;vertical-align:top;}
+.grade-table tr:last-child td{border-bottom:none;}
+.gh{background:#F0FDF4;color:#15803D;font-weight:700;}
+.gm{background:#ECFDF5;color:#065F46;font-weight:700;}
+.gl{background:#FFFBEB;color:#92400E;font-weight:700;}
+.gcl{background:#FEF2F2;color:#991B1B;font-weight:700;}
+
+/* PDF section */
+.pdf-wrap{background:#fff;border:1px solid #D8DFE8;border-radius:10px;
+  overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.pdf-bar{background:#1E3A8A;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;}
+.pdf-bar span{font-size:12px;font-weight:600;color:#fff;}
+.pdf-dl{border:none;background:#38BDF8;color:#0C1A2E;
+  padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .15s;}
+.pdf-dl:hover{background:#7DD3FC;}
+.pdf-viewer{width:100%;height:640px;border:none;display:block;}
+
+/* Start button */
+.lp-start-wrap{display:flex;justify-content:center;margin-top:10px;padding-bottom:16px;}
+.lp-start-btn{
+  background:#1E40AF;color:#fff;border:none;
+  padding:14px 48px;border-radius:8px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+  box-shadow:0 4px 14px rgba(30,64,175,.35);
+  display:flex;align-items:center;gap:10px;
+}
+.lp-start-btn:hover{background:#1E3A8A;transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(30,64,175,.45);}
+
+
+.btn-back{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.2);}
+.btn-back:hover{background:rgba(255,255,255,.2);color:#fff;}
+
+/* ── USE-CASE SECTION ── */
+.uc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px;}
+.uc-card{background:#fff;border:1px solid #D8DFE8;border-radius:10px;
+  padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.uc-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.uc-icon{font-size:20px;}
+.uc-card h3{font-size:13px;font-weight:700;color:#111827;margin:0;}
+.uc-card ul{list-style:none;padding:0;margin:0;}
+.uc-card ul li{font-size:12px;color:#374151;line-height:1.6;
+  padding:3px 0 3px 14px;position:relative;border-bottom:1px solid #F3F4F6;}
+.uc-card ul li:last-child{border-bottom:none;}
+.uc-card ul li::before{content:"▸";position:absolute;left:0;
+  font-size:10px;color:#9CA3AF;top:5px;}
+.uc-note{font-size:11px;color:#6B7280;margin-top:8px;
+  padding:7px 10px;background:#F8FAFC;border-radius:5px;
+  border-left:3px solid #CBD5E1;line-height:1.6;}
+.uc-warn{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;
+  padding:12px 16px;margin-top:12px;
+  display:flex;align-items:flex-start;gap:10px;}
+.uc-warn-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.uc-warn p{font-size:12px;color:#991B1B;line-height:1.6;margin:0;}
+.uc-highlight{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;
+  padding:12px 16px;margin-top:12px;
+  display:flex;align-items:flex-start;gap:10px;}
+.uc-highlight-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.uc-highlight p{font-size:12px;color:#1E3A8A;line-height:1.6;margin:0;}
+
+/* ── POSTER OUTPUT ── */
+.dl-btn.dl-main{background:#1E40AF;color:#fff;border:none;
+  padding:8px 22px;border-radius:6px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .15s;}
+.dl-btn.dl-main:hover{background:#1E3A8A;}
+
+</style>
+</head>
+<body>
+<div id="landing">
+
+  <!-- Hero -->
+  <div class="lp-hero">
+    <h1>AMSTAR 2 Critical Appraisal Tool</h1>
+    <p>Systematic Review Quality Assessment · Shea BJ et al., BMJ 2017;358:j4008</p>
+    <div class="lp-hero-sub">
+      Chang Gung Memorial Hospital Linkou &nbsp;·&nbsp; EBM / 臨床藥師教學參考<br>
+      本工具依據 AMSTAR 2 官方評分表設計，共 16 題，含中文評分細項、評讀說明欄及雙版海報匯出功能。
+    </div>
+  </div>
+
+  <div class="lp-body">
+
+    <!-- Info cards -->
+    <div class="lp-cards">
+      <div class="lp-card">
+        <div class="lp-card-icon">📋</div>
+        <h3>16 題評讀項目</h3>
+        <p>含中文評分細項（逐條說明達到 Yes / Partial Yes 的條件）、官方評分選項及評讀者說明欄。</p>
+      </div>
+      <div class="lp-card">
+        <div class="lp-card-icon">⚠️</div>
+        <h3>7 個關鍵條目（Critical Domains）</h3>
+        <p>條目 2、4、7、9、11、13、15 為關鍵條目。<br>任一缺陷均對整體評級有顯著影響。</p>
+      </div>
+      <div class="lp-card">
+        <div class="lp-card-icon">🖼</div>
+        <h3>雙版海報匯出</h3>
+        <p><strong>簡版</strong>：4×4 格作答摘要圖，含 Critical/Non-critical 索引列。<br>
+        <strong>詳細版</strong>：完整 5 欄表格含評分細項條列與評讀說明。</p>
+      </div>
+    </div>
+
+    <!-- Question overview table -->
+    <div class="lp-section">
+      <div class="lp-sec-title">🎯 使用情境與適用範圍 When to Use AMSTAR 2</div>
+
+      <div class="uc-grid">
+
+        <div class="uc-card">
+          <div class="uc-card-head">
+            <span class="uc-icon">✅</span>
+            <h3>適用（Applicable）</h3>
+          </div>
+          <ul>
+            <li>評讀包含 <strong>RCTs</strong> 的系統性回顧（SR of RCTs）</li>
+            <li>評讀包含 <strong>NRSIs</strong>（非隨機介入研究）的系統性回顧</li>
+            <li>評讀 <strong>同時納入 RCTs 和 NRSIs</strong> 的混合型系統性回顧</li>
+            <li>評讀以 <strong>Healthcare intervention</strong>（臨床介入措施）為主題的回顧</li>
+            <li>評讀有或無 meta-analysis 的系統性回顧</li>
+          </ul>
+          <div class="uc-note">來源：Shea et al., BMJ 2017 — "…for systematic reviews that include randomised or non-randomised studies of healthcare interventions, or both."</div>
+        </div>
+
+        <div class="uc-card">
+          <div class="uc-card-head">
+            <span class="uc-icon">⚠️</span>
+            <h3>不適用或需謹慎（Limitations）</h3>
+          </div>
+          <ul>
+            <li>診斷準確性回顧（diagnostic accuracy reviews）：建議改用 QUADAS-2</li>
+            <li>預後研究回顧（prognostic reviews）：建議改用 GRADE-Prognosis</li>
+            <li>純描述性系統性回顧（無介入比較）</li>
+            <li>範疇性回顧（scoping reviews）或敘事性回顧（narrative reviews）</li>
+            <li>網絡統合分析（NMA）——有部分條目需額外考量</li>
+          </ul>
+          <div class="uc-note">AMSTAR 2 不設計產生整體「分數」——高得分仍可能掩蓋單一關鍵領域缺陷。</div>
+        </div>
+
+        <div class="uc-card">
+          <div class="uc-card-head">
+            <span class="uc-icon">🔑</span>
+            <h3>7 個關鍵條目（Critical Domains）</h3>
+          </div>
+          <ul>
+            <li><strong>Q2</strong>　Pre-registered protocol（事前方案登錄）</li>
+            <li><strong>Q4</strong>　Comprehensive literature search（全面文獻搜索）</li>
+            <li><strong>Q7</strong>　List of excluded studies with justification（排除清單與理由）</li>
+            <li><strong>Q9</strong>　Risk of Bias assessment（偏差風險評估）</li>
+            <li><strong>Q11</strong>　Appropriate statistical synthesis methods（統計合併方法）</li>
+            <li><strong>Q13</strong>　Consideration of RoB in interpretation（解讀時考量 RoB）</li>
+            <li><strong>Q15</strong>　Investigation of publication bias（發表偏差調查）</li>
+          </ul>
+          <div class="uc-note">任一關鍵條目缺陷均對整體評級有顯著影響；≥2 個關鍵缺陷即評為 Critically Low。</div>
+        </div>
+
+        <div class="uc-card">
+          <div class="uc-card-head">
+            <span class="uc-icon">📊</span>
+            <h3>評讀流程建議</h3>
+          </div>
+          <ul>
+            <li>建議<strong>兩位評讀者獨立</strong>完成評讀後取得共識</li>
+            <li>遇模糊情況優先查閱 AMSTAR 2 指引文件（見本頁下方 PDF）</li>
+            <li>Q9、Q11 需對 <strong>RCTs 與 NRSI 分別作答</strong></li>
+            <li>若 SR 未進行 meta-analysis，Q11、Q12、Q15 選 <em>N/A</em></li>
+            <li>評讀說明欄（Rater&#39;s notes）建議<strong>引用原文關鍵句</strong>作為判斷依據</li>
+            <li>整體等級以<strong>關鍵條目缺陷數</strong>為優先判定依據</li>
+          </ul>
+          <div class="uc-note">偏離本指引之判斷應記錄於評讀說明欄，以便他人從其經驗獲益。</div>
+        </div>
+
+      </div><!-- uc-grid -->
+
+      <div class="uc-warn">
+        <span class="uc-warn-icon">🚨</span>
+        <p><strong>重要提醒：</strong>AMSTAR 2 並非設計來產生整體「分數」。高分可能掩蓋特定領域的關鍵缺陷，例如文獻搜索不足，或未能評估納入研究的 Risk of Bias。在對系統性回顧進行整體評級時，<strong>必須考量關鍵條目的缺陷</strong>——這些缺陷可能大幅削弱對系統性回顧的信心程度。</p>
+      </div>
+
+      <div class="uc-highlight">
+        <span class="uc-highlight-icon">💡</span>
+        <p><strong>與 GRADE 搭配使用：</strong>AMSTAR 2 評估系統性回顧本身的<strong>方法學品質</strong>；GRADE 評估個別結果指標的<strong>證據可信度</strong>。完整 EBM 評讀建議兩者併用——先以 AMSTAR 2 評讀 SR 品質，再以 GRADE 評定各結果的證據等級。</p>
+      </div>
+
+    </div>
+
+    <div class="lp-section">
+      <div class="lp-sec-title">🏆 整體評級標準 Overall Rating Criteria</div>
+      <table class="grade-table">
+        <thead><tr><th style="width:130px">等級 Rating</th><th>判定標準</th></tr></thead>
+        <tbody>
+          <tr><td class="gh">High 高</td>
+            <td>無關鍵領域缺陷，且非關鍵領域缺陷 ≤1 個。可信賴此回顧提供了對所研究問題準確且全面的摘要。</td></tr>
+          <tr><td class="gm">Moderate 中等</td>
+            <td>無關鍵領域缺陷，且非關鍵領域缺陷 ≤2 個。對此回顧在所研究問題上準確總結有一定的信心。</td></tr>
+          <tr><td class="gl">Low 低</td>
+            <td>1 個關鍵領域缺陷，非關鍵領域缺陷不限數量。在所研究問題上對結論準確性的信心有限。</td></tr>
+          <tr><td class="gcl">Critically Low 極低</td>
+            <td>≥2 個關鍵領域缺陷，非關鍵領域缺陷不限數量。此回顧不應被用於提供準確和全面的摘要。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+        <div class="lp-section">
+      <div class="lp-sec-title">📄 AMSTAR 2 指引文件 Guidance Document（英中對照）</div>
+      <div style="display:flex;align-items:center;gap:14px;
+        background:#fff;border:1px solid #D8DFE8;border-radius:10px;
+        padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:3px;">
+            AMSTAR 2 指引文件（英中對照翻譯）
+          </div>
+          <div style="font-size:11.5px;color:#6B7280;line-height:1.5;">
+            Shea BJ et al. 官方 Guidance Document 全文英中對照 · CGMH Linkou EBM 教學參考 · 9 頁
+          </div>
+        </div>
+        <button onclick="showAmstarRefModal()" class="pdf-dl" style="font-size:12px;padding:9px 22px;white-space:nowrap;
+            border:none;background:#1E40AF;color:#fff;border-radius:6px;
+            font-family:inherit;font-weight:700;cursor:pointer;">
+            📖 查看指引文件全文
+          </button>
+      </div>
+    </div>
+
+<div class="lp-section">
+      <div class="lp-sec-title">📄 AMSTAR 2 指引文件 Guidance Document（英中對照）</div>
+      
+    </div>
+
+    <!-- Start button -->
+    <div class="lp-start-wrap">
+      <button class="lp-start-btn" onclick="startAppraisal()">
+        ▶&nbsp;&nbsp;開始評讀 Start Appraisal
+      </button>
+    </div>
+
+  </div><!-- lp-body -->
+  <div style="text-align:center;padding:14px 0 18px;
+    font-size:11.5px;color:#94A3B8;border-top:1px solid #E2E8F0;
+    background:#F8FAFC;flex-shrink:0;">
+    此教案設計者為土城醫院 臨床藥師鄭湜玄
+  </div>
+</div><!-- landing -->
+
+<div class="shell hidden" id="app-shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <h1>AMSTAR 2</h1>
+    <p>Critical Appraisal Tool<br>Shea et al., BMJ 2017;358:j4008</p>
+  </div>
+  <div class="sb-meta">
+    <div class="ml">Article Name 文章名稱</div>
+    <input class="mi" id="m-sr" placeholder="e.g. Alfatih M et al. 2025">
+    <div class="ml">Rater 評讀者</div>
+    <input class="mi" id="m-rater" placeholder="Name">
+    <input class="mi" id="m-journal" style="display:none">
+    <input class="mi" id="m-date" type="date" style="display:none">
+  </div>
+  <div class="sb-prog">
+    <div class="ml">Progress 進度</div>
+    <div class="pb"><div class="pb-f" id="pb-f" style="width:0%"></div></div>
+    <div class="pb-t" id="pb-t">0 / 16 answered</div>
+  </div>
+  <nav class="sb-nav" id="sb-nav"></nav>
+  <div class="sb-grade">
+    <div class="gl">Overall Rating 整體品質</div>
+    <span class="gp gp-nd" id="gp">Pending</span>
+    <div class="gs" id="gs">Complete all 16 items.</div>
+  </div>
+  <div class="sb-btns">
+    <button class="btn-ex btn-poster" onclick="scrollExport()">📋 Generate Poster</button>
+    <button class="btn-ex btn-reset" onclick="resetAll()">↺ Reset All</button>
+    <button class="btn-ex btn-back" onclick="backToLanding()">← 返回導覽</button>
+  </div>
+
+  <div style="padding:8px 10px;text-align:center;
+    font-size:9.5px;color:rgba(255,255,255,.28);
+    border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;line-height:1.5;">
+    此教案設計者為<br>土城醫院 臨床藥師鄭湜玄
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="main">
+  <div class="sec-label">AMSTAR 2 — 16 Appraisal Items</div>
+  <div id="cards"></div>
+
+  <!-- POSTER SETTINGS -->
+  <div class="settings-panel" id="export-anchor">
+    <div class="sp-title">🎨 海報匯出設定 Poster Export Settings</div>
+    <div class="sp-grid">
+      <div class="sp-row">
+        <div class="sp-lbl">背景顏色 Background</div>
+        <input class="sp-color" type="color" id="c-bg" value="#FFFFFF">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">標題背景 Header BG</div>
+        <input class="sp-color" type="color" id="c-hbg" value="#0F172A">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">標題文字 Header Text</div>
+        <input class="sp-color" type="color" id="c-htxt" value="#F8FAFC">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">框線顏色 Card Border</div>
+        <input class="sp-color" type="color" id="c-bd" value="#1E40AF">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">框線粗細 Border Width</div>
+        <input class="sp-range" type="range" id="c-bw" min="1" max="5" value="2" oninput="document.getElementById('bwv').textContent=this.value+'px'">
+        <div class="sp-val" id="bwv">2px</div>
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">題目字色 Q Text</div>
+        <input class="sp-color" type="color" id="c-qt" value="#111827">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">說明字色 Comment</div>
+        <input class="sp-color" type="color" id="c-cm" value="#374151">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">等級框底色 Grade BG</div>
+        <input class="sp-color" type="color" id="c-gbg" value="#EFF6FF">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">題目字體大小 Q Font</div>
+        <input class="sp-range" type="range" id="c-qf" min="10" max="20" value="13" oninput="document.getElementById('qfv').textContent=this.value+'px'">
+        <div class="sp-val" id="qfv">13px</div>
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">說明字體大小 Note Font</div>
+        <input class="sp-range" type="range" id="c-cf" min="8" max="16" value="11" oninput="document.getElementById('cfv').textContent=this.value+'px'">
+        <div class="sp-val" id="cfv">11px</div>
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">作答標籤字色 Badge Text</div>
+        <input class="sp-color" type="color" id="c-bgt" value="#FFFFFF">
+      </div>
+      <div class="sp-row">
+        <div class="sp-lbl">整體等級字色 Grade Text</div>
+        <input class="sp-color" type="color" id="c-gtxt" value="#1E3A8A">
+      </div>
+    </div>
+    <div class="sp-check-row">
+      <input class="sp-check" type="checkbox" id="c-trans" onchange="document.getElementById('c-bg').disabled=this.checked">
+      <label style="font-size:11.5px;color:var(--ink2);cursor:pointer;" for="c-trans">透明底圖 Transparent background</label>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn-gen" style="background:#1E40AF;" onclick="renderPoster('simple')">🗂 簡版海報（作答結果）</button>
+      <button class="btn-gen" style="background:#065F46;" onclick="renderPoster('detail')">📋 詳細版海報（含條件與說明）</button>
+    </div>
+    <div id="poster-mode-badge" style="display:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:#EFF6FF;color:#1E40AF;margin-top:6px;"></div>
+  </div>
+
+  <div id="poster-wrap">
+    <canvas id="poster-canvas"></canvas>
+    <div class="dl-btns" id="dl-area" style="display:none;">
+      <button class="dl-btn dl-main" id="dl-btn-main" onclick="downloadPoster('png')">⬇ 下載 PNG</button>
+    </div>
+  </div>
+</main>
+</div>
+
+<canvas id="offcanvas"></canvas>
+
+<script>
+// ══════════════════════════════════════════════════════
+// QUESTION DATA
+// Answer options are EXACTLY per official AMSTAR 2 form
+// ══════════════════════════════════════════════════════
+const QS = [
+  {
+    id:1, crit:false,
+    en:"Did the research questions and inclusion criteria for the review include the components of PICO?",
+    zh:"研究問題與納入標準是否包含 PICO 四要素？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件",items:["族群（Population）","介入措施（Intervention）","比較組（Comparator group）","結果指標（Outcome）"],note:"可選項（建議）：追蹤時間框架（Timeframe for follow-up）"}
+    }
+  },
+  {
+    id:2, crit:true,
+    en:"Did the report of the review contain an explicit statement that the review methods were established prior to the conduct of the review and did the report justify any significant deviations from the protocol?",
+    zh:"是否明確說明回顧方法在執行前已確立，且對任何重大偏差均有說明？",
+    // Official form: Yes / Partial Yes / No
+    ans:[["Yes"],["Partial Yes"],["No"]],
+    crit_zh:{
+      partial:{lbl:"符合「Partial Yes」之條件——作者說明書面協議包含全部：",items:["回顧問題（Review question）","搜尋策略（Search strategy）","納入／排除標準（Inclusion/exclusion criteria）","偏差風險評估方法（Risk of bias assessment）"]},
+      yes:{lbl:"符合「Yes」之條件（在 Partial Yes 基礎上）——協議應已登錄並說明：",items:["統合分析計畫（如適用）","調查異質性原因的計畫","對任何偏離協議之處的說明理由"]}
+    }
+  },
+  {
+    id:3, crit:false,
+    en:"Did the review authors explain their selection of the study designs for inclusion in the review?",
+    zh:"是否說明了選擇特定研究設計納入回顧的理由？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["說明僅納入 RCT 的理由","或說明僅納入 NRSI 的理由","或說明同時納入 RCT 與 NRSI 的理由"]}
+    }
+  },
+  {
+    id:4, crit:true,
+    en:"Did the review authors use a comprehensive literature search strategy?",
+    zh:"是否採用了完整的文獻搜尋策略？",
+    // Official form: Yes / Partial Yes / No
+    ans:[["Yes"],["Partial Yes"],["No"]],
+    crit_zh:{
+      partial:{lbl:"符合「Partial Yes」之條件（全部）：",items:["至少搜尋 2 個相關資料庫","提供關鍵字及／或搜尋策略","說明出版限制之理由（如語言限制）"]},
+      yes:{lbl:"符合「Yes」之條件（在 Partial Yes 基礎上，全部）：",items:["搜尋納入研究的參考文獻清單","搜尋試驗／研究登錄庫（如 ClinicalTrials.gov）","諮詢該領域的內容專家","視情況搜尋灰色文獻","在回顧完成前 24 個月內執行搜尋"]}
+    }
+  },
+  {
+    id:5, crit:false,
+    en:"Did the review authors perform study selection in duplicate?",
+    zh:"文獻篩選是否由兩位評讀者重複（獨立）執行？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["至少兩位評讀者獨立達成共識決定納入哪些研究","或兩位評讀者評讀樣本達 80% 以上一致性，其餘由一位完成"]}
+    }
+  },
+  {
+    id:6, crit:false,
+    en:"Did the review authors perform data extraction in duplicate?",
+    zh:"資料萃取是否由兩位評讀者重複（獨立）執行？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["至少兩位評讀者就應萃取哪些資料達成共識","或兩位評讀者從樣本萃取達 80% 以上一致性，其餘由一位完成"]}
+    }
+  },
+  {
+    id:7, crit:true,
+    en:"Did the review authors provide a list of excluded studies and justify the exclusions?",
+    zh:"是否提供排除研究清單並逐一說明排除理由？",
+    // Official form: Yes / Partial Yes / No
+    ans:[["Yes"],["Partial Yes"],["No"]],
+    crit_zh:{
+      partial:{lbl:"符合「Partial Yes」之條件：",items:["提供所有經全文閱讀後被排除之潛在相關研究的清單"]},
+      yes:{lbl:"符合「Yes」之條件（在 Partial Yes 基礎上）：",items:["對每篇潛在相關研究，逐一說明被排除的理由"]}
+    }
+  },
+  {
+    id:8, crit:false,
+    en:"Did the review authors describe the included studies in adequate detail?",
+    zh:"是否對納入研究進行了充分詳細的描述？",
+    // Official form: Yes / Partial Yes / No
+    ans:[["Yes"],["Partial Yes"],["No"]],
+    crit_zh:{
+      partial:{lbl:"符合「Partial Yes」之條件（全部）：",items:["描述研究族群","描述介入措施","描述比較組","描述結果指標","描述研究設計"]},
+      yes:{lbl:"符合「Yes」之條件（在 Partial Yes 基礎上，全部）：",items:["詳細描述族群","詳細描述介入措施與比較組（含相關劑量）","描述研究場域","追蹤時間框架"]}
+    }
+  },
+  {
+    id:9, crit:true,
+    en:"Did the review authors use a satisfactory technique for assessing the risk of bias (RoB) in individual studies that were included in the review?",
+    zh:"是否採用令人滿意的技術評估納入研究的偏差風險（RoB）？",
+    // Q9 is SPECIAL — has TWO sub-sections each with own answer options
+    // RCTs: Yes / Partial Yes / No / [Includes only NRSI]
+    // NRSI: Yes / Partial Yes / No / [Includes only RCTs]
+    isQ9:true,
+    ans_rct:[["Yes"],["Partial Yes"],["No"],["Includes only NRSI"]],
+    ans_nrsi:[["Yes"],["Partial Yes"],["No"],["Includes only RCTs"]],
+    crit_zh:{
+      rct_p:{lbl:"【RCT】符合「Partial Yes」——必須已評估：",items:["分配未隱匿（Unconcealed allocation）的偏差","患者及評估者未設盲的偏差（客觀結果如全因死亡率不適用）"]},
+      rct_y:{lbl:"【RCT】符合「Yes」——還應評估：",items:["隨機序列非真正隨機的偏差","從多次測量或分析中選擇性報告結果的偏差"]},
+      nrsi_p:{lbl:"【NRSI】符合「Partial Yes」——必須已評估：",items:["干擾因素（Confounding）引起的偏差","選樣偏差（Selection bias）"]},
+      nrsi_y:{lbl:"【NRSI】符合「Yes」——還應評估：",items:["確認曝露與結果所用方法的偏差","從多次測量或分析中選擇性報告結果的偏差"]}
+    }
+  },
+  {
+    id:10, crit:false,
+    en:"Did the review authors report on the sources of funding for the studies included in the review?",
+    zh:"是否報告了納入研究的資金來源？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件：",items:["已報告各納入研究的資金來源"],note:"注意：若說明已查找但研究作者未予報告，亦符合條件。"}
+    }
+  },
+  {
+    id:11, crit:true,
+    en:"If meta-analysis was performed, did the review authors use appropriate methods for statistical combination of results?",
+    zh:"若有統合分析，統計合併結果的方法是否適切？",
+    // Q11 has TWO sub-sections (RCT / NRSI) each: Yes / No / No meta-analysis conducted
+    isQ11:true,
+    ans_rct:[["Yes"],["No"],["No meta-analysis conducted"]],
+    ans_nrsi:[["Yes"],["No"],["No meta-analysis conducted"]],
+    crit_zh:{
+      rct_y:{lbl:"【RCT】符合「Yes」之條件：",items:["說明了合併資料進行統合分析的理由","採用適當的加權技術合併結果，並在存在異質性時予以調整","調查了任何異質性的原因"]},
+      nrsi_y:{lbl:"【NRSI】符合「Yes」之條件：",items:["說明了合併資料進行統合分析的理由","採用適當的加權技術合併結果，並在存在異質性時予以調整","合併時使用已針對干擾因素調整後的效應估計值，或說明使用原始資料之理由","同時含 RCT 與 NRSI 時，分別報告兩類研究的摘要效應估計值"]}
+    }
+  },
+  {
+    id:12, crit:true,
+    en:"If meta-analysis was performed, did the review authors assess the potential impact of RoB in individual studies on the results of the meta-analysis or other evidence synthesis?",
+    zh:"若有統合分析，是否評估了個別研究偏差風險對統合結果的潛在影響？",
+    // Official form: Yes / No / No meta-analysis conducted
+    ans:[["Yes"],["No"],["No meta-analysis conducted"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["僅納入低偏差風險之 RCT","或針對偏差風險程度不一的 RCT 及／或 NRSI，執行分析以調查偏差風險的可能影響"]}
+    }
+  },
+  {
+    id:13, crit:true,
+    en:"Did the review authors account for RoB in individual studies when interpreting/discussing the results of the review?",
+    zh:"解讀／討論回顧結果時，是否考量了各研究的偏差風險？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["僅納入低偏差風險之 RCT","或針對納入中高偏差風險 RCT 或 NRSI，提供偏差風險對結果可能影響的討論"]}
+    }
+  },
+  {
+    id:14, crit:false,
+    en:"Did the review authors provide a satisfactory explanation for, and discussion of, any heterogeneity observed in the results of the review?",
+    zh:"是否對觀察到的任何異質性提供了令人滿意的解釋與討論？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["結果中無顯著異質性","或存在異質性時，調查了異質性來源並討論其對回顧結果的影響"]}
+    }
+  },
+  {
+    id:15, crit:true,
+    en:"If they performed quantitative synthesis, did the review authors carry out an adequate investigation of publication bias (small study bias) and discuss its likely impact on the results of the review?",
+    zh:"若執行了定量合成，是否對發表偏差進行了充分調查並討論其影響？",
+    // Official form: Yes / No / No meta-analysis conducted
+    ans:[["Yes"],["No"],["No meta-analysis conducted"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件：",items:["執行了圖形（如漏斗圖）或統計檢驗以評估發表偏差，並討論了發表偏差的可能性及其對結果影響的程度"]}
+    }
+  },
+  {
+    id:16, crit:false,
+    en:"Did the review authors report any potential sources of conflict of interest, including any funding they received for conducting the review?",
+    zh:"是否申報了任何潛在利益衝突來源，包含執行本回顧所獲得的資金？",
+    // Official form: Yes / No
+    ans:[["Yes"],["No"]],
+    crit_zh:{
+      yes:{lbl:"符合「Yes」之條件——滿足其中一項：",items:["作者申報無競爭利益","或說明了資金來源及如何管理潛在利益衝突"]}
+    }
+  }
+];
+
+const CRIT_IDS = new Set([2,4,7,9,11,13,15]);
+// answers: { qid: val } for normal, { '9_rct': val, '9_nrsi': val } for Q9, { '11_rct': val, '11_nrsi': val } for Q11
+const answers = {};
+
+// ══════════════════════════════════════
+// BUILD
+// ══════════════════════════════════════
+function backToLanding(){
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('landing').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+
+function startAppraisal(){
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+}
+
+
+function showDownloadArea(mode, vis){
+  const area = document.getElementById('dl-area');
+  area.style.display = 'block';
+}
+
+
+function init(){
+  buildNav();
+  buildCards();
+  document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+}
+
+function buildNav(){
+  const nav = document.getElementById('sb-nav');
+  QS.forEach(q=>{
+    const d = document.createElement('div');
+    d.className='ni'; d.id=`ni-${q.id}`;
+    d.onclick=()=>jumpTo(q.id);
+    const short = q.en.split(' ').slice(0,6).join(' ')+'…';
+    d.innerHTML=`<div class="ni-n ${q.crit?'cr':'nc'}">${q.id}</div><div class="ni-txt">${short}</div><span class="nb nb-p" id="nb-${q.id}">—</span>`;
+    nav.appendChild(d);
+  });
+}
+
+function buildCards(){
+  const c = document.getElementById('cards');
+  QS.forEach(q=>{
+    const card = document.createElement('div');
+    card.className=`qcard ${q.crit?'cr':'nc'}`;
+    card.id=`card-${q.id}`;
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className='qhdr';
+    hdr.onclick=()=>toggleCard(q.id);
+    hdr.innerHTML=`
+      <div class="qn">${q.id}</div>
+      <div class="qtw">
+        <div class="qen">${q.en}</div>
+        <div class="qzh">${q.zh}</div>
+        <div class="qmeta">
+          <span class="qtag ${q.crit?'qt-cr':'qt-nc'}">${q.crit?'Critical':'Non-critical'}</span>
+          <span class="qap qap-nd" id="ap-${q.id}">Not answered</span>
+        </div>
+      </div>
+      <span class="chv">▼</span>`;
+
+    const body = document.createElement('div');
+    body.className='qbody';
+    body.innerHTML = buildCriteriaHTML(q) + buildAnswerHTML(q) + `
+      <div class="cm-sec">
+        <div class="cmlbl">評讀者說明 / 原文依據 Rater's notes</div>
+        <textarea class="cmta" id="cm-${q.id}" placeholder="請輸入勾選原因、原文引用句或補充說明…"></textarea>
+      </div>`;
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    c.appendChild(card);
+  });
+}
+
+function buildCriteriaHTML(q){
+  const cr = q.crit_zh; if(!cr) return '';
+  let inner = '';
+
+  if(q.isQ9){
+    inner=`
+      <div class="cgrid">
+        <div class="cbox cb-p"><div class="cblbl">${cr.rct_p.lbl}</div><ul class="clist">${cr.rct_p.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+        <div class="cbox cb-y"><div class="cblbl">${cr.rct_y.lbl}</div><ul class="clist">${cr.rct_y.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+      </div>
+      <hr class="cdiv">
+      <div class="cgrid">
+        <div class="cbox cb-nrsi"><div class="cblbl">${cr.nrsi_p.lbl}</div><ul class="clist">${cr.nrsi_p.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+        <div class="cbox cb-nrsi"><div class="cblbl">${cr.nrsi_y.lbl}</div><ul class="clist">${cr.nrsi_y.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+      </div>`;
+  } else if(q.isQ11){
+    inner=`
+      <div class="cgrid">
+        <div class="cbox cb-y"><div class="cblbl">${cr.rct_y.lbl}</div><ul class="clist">${cr.rct_y.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+        <div class="cbox cb-nrsi"><div class="cblbl">${cr.nrsi_y.lbl}</div><ul class="clist">${cr.nrsi_y.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+      </div>`;
+  } else {
+    const keys = Object.keys(cr);
+    const boxes = keys.map(k=>{
+      const b=cr[k];
+      const cls=k==='partial'?'cb-p':'cb-y';
+      return `<div class="cbox ${cls}"><div class="cblbl">${b.lbl}</div><ul class="clist">${b.items.map(i=>`<li>${i}</li>`).join('')}</ul>${b.note?`<div class="cnote">${b.note}</div>`:''}</div>`;
+    }).join('');
+    inner=`<div class="cgrid ${keys.length===1?'s1':''}">${boxes}</div>`;
+  }
+
+  return `<div class="crit-sec">
+    <span class="ctog" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.classList.contains('open')?'block':'none'">
+      <span class="ctog-arr">▶</span> 評分細項標準（點擊展開 / 收起）
+    </span>
+    <div class="cbody">${inner}</div>
+  </div>`;
+}
+
+function buildAnswerHTML(q){
+  // Q9 — two separate sub-sections
+  if(q.isQ9){
+    return `
+      <div class="ans-sec">
+        <div class="ans-sub-label">RCTs</div>
+        <div class="ans-row">${q.ans_rct.map(([v])=>`<button class="abtn" data-k="9_rct" data-v="${v}" onclick="pick('9_rct','${v}')">${v}</button>`).join('')}</div>
+      </div>
+      <div class="ans-sec">
+        <div class="ans-sub-label">NRSI</div>
+        <div class="ans-row">${q.ans_nrsi.map(([v])=>`<button class="abtn" data-k="9_nrsi" data-v="${v}" onclick="pick('9_nrsi','${v}')">${v}</button>`).join('')}</div>
+      </div>`;
+  }
+  // Q11 — two separate sub-sections
+  if(q.isQ11){
+    return `
+      <div class="ans-sec">
+        <div class="ans-sub-label">RCTs</div>
+        <div class="ans-row">${q.ans_rct.map(([v])=>`<button class="abtn" data-k="11_rct" data-v="${v}" onclick="pick('11_rct','${v}')">${v}</button>`).join('')}</div>
+      </div>
+      <div class="ans-sec">
+        <div class="ans-sub-label">NRSI</div>
+        <div class="ans-row">${q.ans_nrsi.map(([v])=>`<button class="abtn" data-k="11_nrsi" data-v="${v}" onclick="pick('11_nrsi','${v}')">${v}</button>`).join('')}</div>
+      </div>`;
+  }
+  // Normal questions
+  return `<div class="ans-sec"><div class="ans-row">${q.ans.map(([v])=>`<button class="abtn" data-k="${q.id}" data-v="${v}" onclick="pick('${q.id}','${v}')">${v}</button>`).join('')}</div></div>`;
+}
+
+// ══════════════════════════════════════
+// INTERACTIONS
+// ══════════════════════════════════════
+function toggleCard(id){
+  const c=document.getElementById(`card-${id}`);
+  c.classList.toggle('open');
+  document.getElementById(`ni-${id}`)?.classList.toggle('active',c.classList.contains('open'));
+}
+
+function jumpTo(id){
+  const c=document.getElementById(`card-${id}`);
+  if(!c.classList.contains('open')) c.classList.add('open');
+  c.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function scrollExport(){
+  document.getElementById('export-anchor').scrollIntoView({behavior:'smooth'});
+}
+
+function pick(key, val){
+  answers[key]=val;
+
+  // Update all buttons for this key
+  document.querySelectorAll(`[data-k="${key}"]`).forEach(b=>{
+    b.className='abtn';
+    if(b.dataset.v===val){
+      const cls = val==='Yes'?'sel-yes':val==='Partial Yes'?'sel-partial':val==='No'?'sel-no':'sel-na';
+      b.classList.add(cls);
+    }
+  });
+
+  // Update card preview badge (only for normal questions)
+  const qid = key.includes('_') ? key.split('_')[0] : key;
+  updatePreview(parseInt(qid));
+
+  // Update nav badge
+  updateNavBadge(parseInt(qid));
+
+  updateGrade();
+}
+
+function updatePreview(qid){
+  const q = QS.find(x=>x.id===qid);
+  const ap = document.getElementById(`ap-${qid}`);
+  if(!ap) return;
+
+  if(q.isQ9){
+    const rv = answers['9_rct'], nv = answers['9_nrsi'];
+    if(rv||nv){
+      const txt = [rv&&`RCT:${rv}`, nv&&`NRSI:${nv}`].filter(Boolean).join(' | ');
+      ap.className='qap qap-nd';
+      // Color by worst
+      if((rv==='No'||nv==='No')){ap.className='qap qap-no';}
+      else if((rv==='Partial Yes'||nv==='Partial Yes')){ap.className='qap qap-partial';}
+      else if(rv&&nv){ap.className='qap qap-yes';}
+      ap.textContent=txt;
+    }
+    return;
+  }
+  if(q.isQ11){
+    const rv=answers['11_rct'], nv=answers['11_nrsi'];
+    if(rv||nv){
+      const txt=[rv&&`RCT:${rv}`,nv&&`NRSI:${nv}`].filter(Boolean).join(' | ');
+      ap.className='qap qap-nd';
+      if((rv==='No'||nv==='No')){ap.className='qap qap-no';}
+      else if(rv&&nv){ap.className='qap qap-yes';}
+      ap.textContent=txt;
+    }
+    return;
+  }
+  const v = answers[String(qid)];
+  if(!v) return;
+  const cls = v==='Yes'?'qap-yes':v==='Partial Yes'?'qap-partial':v==='No'?'qap-no':'qap-na';
+  ap.className=`qap ${cls}`;
+  ap.textContent=v;
+}
+
+function updateNavBadge(qid){
+  const nb = document.getElementById(`nb-${qid}`);
+  if(!nb) return;
+  const q = QS.find(x=>x.id===qid);
+  let v;
+  if(q.isQ9) v = (answers['9_rct']||'')+(answers['9_nrsi']?'/'+answers['9_nrsi']:'');
+  else if(q.isQ11) v = (answers['11_rct']||'')+(answers['11_nrsi']?'/'+answers['11_nrsi']:'');
+  else v = answers[String(qid)];
+  if(!v){nb.className='nb nb-p';nb.textContent='—';return;}
+  const short = v==='Yes'?'Yes':v==='Partial Yes'?'Partial':v==='No'?'No':'N/A';
+  const cls = v.includes('Yes')&&!v.includes('Partial')&&!v.includes('No')?'nb-yes':v.includes('Partial')?'nb-partial':v.includes('No')?'nb-no':'nb-na';
+  nb.className=`nb ${cls}`;
+  nb.textContent=short;
+}
+
+function getAnswered(){
+  // Q9/Q11 各算 1 題，需 RCT + NRSI 兩子欄均有作答才算完整
+  // 但若其中一欄選「Includes only NRSI」或「Includes only RCTs」
+  // 則該欄免答，另一欄有答即算完整
+  let count=0;
+  QS.forEach(q=>{
+    if(q.isQ9){
+      const rv=answers['9_rct']||'', nv=answers['9_nrsi']||'';
+      const rctDone  = rv !== '';   // RCT 欄有答（含免評）
+      const nrsiDone = nv !== '';   // NRSI 欄有答（含免評）
+      // 若一欄選「僅含另一種設計」→ 另一欄視為免答，只要主欄有答即算完整
+      const rctExempt  = nv === 'Includes only RCTs';   // NRSI 欄選「僅含RCT」→ RCT欄免答
+      const nrsiExempt = rv === 'Includes only NRSI';   // RCT 欄選「僅含NRSI」→ NRSI欄免答
+      const done = (rctDone || rctExempt) && (nrsiDone || nrsiExempt);
+      if(done) count++;
+    } else if(q.isQ11){
+      const rv=answers['11_rct']||'', nv=answers['11_nrsi']||'';
+      const done = rv !== '' && nv !== '';
+      if(done) count++;
+    } else {
+      if(answers[String(q.id)]) count++;
+    }
+  });
+  return count;
+}
+
+function isWeak(q){
+  // ── AMSTAR 2 Box 2（Shea et al., BMJ 2017;358:j4008）正確邏輯 ──
+  // 只有「No」才構成弱點；Partial Yes 不算弱點，不影響整體等級
+  // 免評選項（不計弱點）：
+  //   Q9  RCT sub  → "Includes only NRSI"
+  //   Q9  NRSI sub → "Includes only RCTs"
+  //   Q11, Q12, Q15 → "No meta-analysis conducted"
+
+  if(q.isQ9){
+    const rv = answers['9_rct']  || '';
+    const nv = answers['9_nrsi'] || '';
+    return rv === 'No' || nv === 'No';
+  }
+
+  if(q.isQ11){
+    const rv = answers['11_rct']  || '';
+    const nv = answers['11_nrsi'] || '';
+    return rv === 'No' || nv === 'No';
+  }
+
+  const v = answers[String(q.id)];
+  if(!v || v === '') return false;
+  // 只有明確 No 才是弱點
+  // Partial Yes、Yes、N/A、免評選項均不計入弱點
+  return v === 'No';
+}
+
+function updateGrade(){
+  // ── Box 2 評定邏輯（原文）──
+  // High         : 0 個關鍵弱點，且 ≤ 1 個非關鍵弱點
+  // Moderate     : 0 個關鍵弱點，且 > 1 個非關鍵弱點
+  //                *腳注：多個非關鍵弱點可能適合從 Moderate 降至 Low
+  // Low          : 1 個關鍵弱點（有或無非關鍵弱點）
+  // Critically Low: ≥ 2 個關鍵弱點（有或無非關鍵弱點）
+  //
+  // 重要：Partial Yes 在關鍵題 = 1 個 critical flaw
+  //        Partial Yes 在非關鍵題 = 1 個 non-critical weakness
+  //        "No meta-analysis conducted" / "Includes only NRSI/RCTs" = 不計入弱點
+  //        Q9 雙子欄算 1 個關鍵題（最多貢獻 1 個 critical flaw）
+  //        Q11 雙子欄算 1 個關鍵題（最多貢獻 1 個 critical flaw）
+
+  const total = getAnswered();
+  document.getElementById('pb-f').style.width = Math.round(total/16*100)+'%';
+  document.getElementById('pb-t').textContent = total + ' / 16 answered';
+
+  let cf=0, nw=0;
+  // 逐題判斷弱點
+  QS.forEach(q=>{
+    if(!isWeak(q)) return;
+    if(q.crit) cf++;   // 關鍵弱點（只計 No）
+    else       nw++;   // 非關鍵弱點（只計 No）
+  });
+
+  // 計算各類作答數量（供顯示）
+  let cntYes=0, cntPartial=0, cntNo=0, cntNA=0;
+  QS.forEach(q=>{
+    const getV = (q) => {
+      if(q.isQ9)  return [answers['9_rct']||'', answers['9_nrsi']||''];
+      if(q.isQ11) return [answers['11_rct']||'', answers['11_nrsi']||''];
+      return [answers[String(q.id)]||''];
+    };
+    getV(q).forEach(v=>{
+      if(!v) return;
+      if(v==='Yes') cntYes++;
+      else if(v==='Partial Yes') cntPartial++;
+      else if(v==='No') cntNo++;
+      else cntNA++;
+    });
+  });
+
+  let txt, sub, cls;
+  if(total < 16){
+    txt='Pending…';
+    sub='Complete all 16 items to see overall rating.';
+    cls='gp-nd';
+  } else if(cf >= 2){
+    txt='Critically Low 極低';
+    sub='Critical flaws: '+cf+' · Non-critical weaknesses: '+nw+' · Yes: '+cntYes+' / Partial Yes: '+cntPartial+' / No: '+cntNo;
+    cls='gp-cl';
+  } else if(cf === 1){
+    txt='Low 低';
+    sub='Critical flaw: '+cf+' · Non-critical weaknesses: '+nw+' · Yes: '+cntYes+' / Partial Yes: '+cntPartial+' / No: '+cntNo;
+    cls='gp-l';
+  } else if(nw > 1){
+    txt='Moderate 中等';
+    sub='Critical flaws: 0 · Non-critical weaknesses: '+nw+' · Yes: '+cntYes+' / Partial Yes: '+cntPartial+' / No: '+cntNo;
+    cls='gp-m';
+  } else {
+    txt='High 高';
+    sub='Critical flaws: 0 · Non-critical weaknesses: '+nw+' · Yes: '+cntYes+' / Partial Yes: '+cntPartial+' / No: '+cntNo;
+    cls='gp-h';
+  }
+
+  const p = document.getElementById('gp');
+  p.textContent = txt;
+  p.className = 'gp ' + cls;
+  document.getElementById('gs').textContent = sub;
+}
+
+function resetAll(){
+  if(!confirm('Reset all answers?')) return;
+  Object.keys(answers).forEach(k=>delete answers[k]);
+  QS.forEach(q=>{
+    const ap=document.getElementById(`ap-${q.id}`);
+    if(ap){ap.className='qap qap-nd';ap.textContent='Not answered';}
+    const nb=document.getElementById(`nb-${q.id}`);
+    if(nb){nb.className='nb nb-p';nb.textContent='—';}
+    document.querySelectorAll(`[data-k]`).forEach(b=>b.className='abtn');
+    const ta=document.getElementById(`cm-${q.id}`);
+    if(ta) ta.value='';
+  });
+  updateGrade();
+}
+
+// ══════════════════════════════════════
+// POSTER RENDER
+// ══════════════════════════════════════
+function gv(id){return document.getElementById(id).value;}
+
+function renderPoster(mode){
+  mode = mode || 'detail';
+
+  const transparent = document.getElementById('c-trans').checked;
+  const bgColor = transparent ? null : gv('c-bg');
+  const hBg=gv('c-hbg'), hTxt=gv('c-htxt'), cardBd=gv('c-bd');
+  const bdW=parseInt(gv('c-bw')), qTxt=gv('c-qt'), cmTxt=gv('c-cm');
+  const gBg=gv('c-gbg'), bgTxt=gv('c-bgt'), gTxt=gv('c-gtxt');
+  const qFs=parseInt(gv('c-qf')), cmFs=parseInt(gv('c-cf'));
+  const rater=gv('m-rater')||'—', sr=gv('m-sr')||'—';
+  const jnl=gv('m-journal')||'—', dt=gv('m-date')||'—';
+
+  /* Layout */
+  const GX=22;
+  const qFont='600 '+qFs+'px "Noto Sans","Noto Sans TC",sans-serif';
+  const cmFont=cmFs+'px "Noto Sans TC","Noto Sans",sans-serif';
+  const ansFont='bold '+qFs+'px "Noto Sans","Noto Sans TC",sans-serif';
+
+  /* Grade */
+  let cf=0, nw=0;
+  QS.forEach(q=>{ if(!isWeak(q)) return; if(q.crit) cf++; else nw++; });
+  const total=getAnswered();
+  let gradeStr='Pending', gradeFg='#6B7280';
+  if(total>=16){
+    if(cf>=2){gradeStr='Critically Low 極低';gradeFg='#991B1B';}
+    else if(cf===1){gradeStr='Low 低';gradeFg='#92400E';}
+    else if(nw>1){gradeStr='Moderate 中等';gradeFg='#065F46';}
+    else{gradeStr='High 高';gradeFg='#1E3A8A';}
+  }
+
+  const HEADER_H = 92, GRADE_H = 72;
+  const BODY_START = HEADER_H + GRADE_H + 18;
+
+  // Helper: draw header + grade bar onto ctx
+  function drawHdrGrade(ctx, W, totalH, showSub){
+    const off2 = ctx.canvas;
+    off2.width  = W;
+    off2.height = totalH;
+    ctx.clearRect(0, 0, W, totalH);
+    if(bgColor){ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,totalH);}
+    // Header
+    ctx.fillStyle=hBg; ctx.fillRect(0,0,W,HEADER_H);
+    ctx.fillStyle=hTxt;
+    ctx.font='bold 24px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.fillText('AMSTAR 2 — Critical Appraisal Result', GX, 38);
+    ctx.font='13px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.globalAlpha=0.72;
+    ctx.fillText('Shea et al., BMJ 2017;358:j4008   ·   Rater: '+rater+'   ·   SR: '+sr+'   ·   '+jnl+'   ·   '+dt, GX, 64);
+    ctx.globalAlpha=1;
+    // Grade bar — taller when no sub-line
+    const gb_h = showSub ? GRADE_H-18 : GRADE_H-8;
+    const gb_y = HEADER_H+10;
+    rrect(ctx,GX,gb_y,W-GX*2,gb_h,8,'fill',gBg);
+    rrect(ctx,GX,gb_y,W-GX*2,gb_h,8,'stroke',gradeFg,2);
+    ctx.fillStyle=gradeFg;
+    ctx.font='bold '+(qFs+6)+'px "Noto Sans","Noto Sans TC",sans-serif';
+    const gradeY = showSub ? gb_y+28 : gb_y+gb_h/2+8;
+    ctx.fillText('Overall Quality: '+gradeStr, GX+16, gradeY);
+    if(showSub){
+      ctx.fillStyle=gTxt;
+      ctx.font=qFs+'px "Noto Sans","Noto Sans TC",sans-serif';
+      ctx.fillText('Critical flaws: '+cf+'   ·   Non-critical weaknesses: '+nw+'   ·   Answered: '+total+'/16', GX+16, gb_y+52);
+    }
+  }
+
+  // Helper: answer color
+  function getAnsFgLocal(q){
+    if(q.isQ9){
+      const rv=answers['9_rct'], nv=answers['9_nrsi'];
+      if(rv==='No'||nv==='No') return '#DC2626';
+      if(rv==='Partial Yes'||nv==='Partial Yes') return '#B45309';
+      if(rv==='Yes'&&nv==='Yes') return '#15803D';
+      return '#6D28D9';
+    }
+    if(q.isQ11){
+      const rv=answers['11_rct'], nv=answers['11_nrsi'];
+      if(rv==='No'||nv==='No') return '#DC2626';
+      if(rv==='Yes'&&nv==='Yes') return '#15803D';
+      return '#6D28D9';
+    }
+    return getAnsFgSimple(q);
+  }
+
+  // Helper: answer display text
+  function getAnsDisp(q){
+    if(q.isQ9)  return 'RCT: '+(answers['9_rct']||'—')+'  |  NRSI: '+(answers['9_nrsi']||'—');
+    if(q.isQ11) return 'RCT: '+(answers['11_rct']||'—')+'  |  NRSI: '+(answers['11_nrsi']||'—');
+    return answers[String(q.id)]||'Not answered';
+  }
+
+  // Helper: criteria bullet lines
+  function getCritLines(q){
+    const cr=q.crit_zh; if(!cr) return [];
+    const lines=[];
+    const add=(lbl,items,note)=>{
+      lines.push('【'+lbl+'】');
+      (items||[]).forEach(it=>lines.push('  ▪ '+it));
+      if(note) lines.push('  ※ '+note);
+    };
+    if(q.isQ9){add(cr.rct_p.lbl,cr.rct_p.items);add(cr.rct_y.lbl,cr.rct_y.items);
+               add(cr.nrsi_p.lbl,cr.nrsi_p.items);add(cr.nrsi_y.lbl,cr.nrsi_y.items);}
+    else if(q.isQ11){add(cr.rct_y.lbl,cr.rct_y.items);add(cr.nrsi_y.lbl,cr.nrsi_y.items);}
+    else Object.values(cr).forEach(b=>add(b.lbl,b.items,b.note));
+    return lines;
+  }
+
+  const off = document.getElementById('offcanvas');
+  const ctx = off.getContext('2d');
+
+  // ══════════════════════════════════════════════
+  // SIMPLE MODE: 4×4 fixed grid + legend bar
+  // ══════════════════════════════════════════════
+  if(mode === 'simple'){
+    const W=2480, COLS=4, CGAP=10, RGAP=8;
+    const CW=Math.floor((W-GX*2-CGAP*(COLS-1))/COLS);
+
+    // ── Compact card layout ──
+    // Row: [Q# pill 42px] [gap 10] [title lines] [gap 8] [badge]
+    // Horizontal: pill LEFT, answer badge RIGHT, title fills middle
+    const CARD_PAD=14;   // top/bottom padding
+    const Q_PILL_W=44, Q_PILL_H=28;
+    const ANS_AREA=200;  // reserved width on right for answer badge
+    const TITLE_W=CW-Q_PILL_W-12-ANS_AREA-CARD_PAD*2;
+    const T_LH=qFs+6;
+
+    // Measure max title lines needed (cap at 2)
+    const tmp3=document.createElement('canvas'); tmp3.width=CW; tmp3.height=100;
+    const tc3=tmp3.getContext('2d');
+    tc3.font='600 '+qFs+'px "Noto Sans",sans-serif';
+    const maxTitleLines=QS.reduce((m,q)=>Math.max(m,Math.min(2,wrapT(tc3,q.en,TITLE_W).length)),1);
+    const CARD_H=CARD_PAD+Math.max(Q_PILL_H, maxTitleLines*T_LH)+CARD_PAD;
+
+    const LGD_H=48;
+    const GRID_TOP=BODY_START+LGD_H+10;
+    const TOT_H=GRID_TOP+4*(CARD_H+RGAP)-RGAP+GX+36;
+
+    drawHdrGrade(ctx, W, TOT_H, false);
+
+    // ── Legend bar ──
+    ctx.fillStyle='#F1F5F9'; ctx.fillRect(GX, BODY_START, W-GX*2, LGD_H);
+    ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=1;
+    ctx.strokeRect(GX, BODY_START, W-GX*2, LGD_H);
+    const lgMid=BODY_START+LGD_H/2;
+    ctx.font='bold 14px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.fillStyle='#374151';
+    const cLbl='Critical：'; const cLW2=ctx.measureText(cLbl).width;
+    ctx.fillText(cLbl, GX+14, lgMid+5);
+    let lgX=GX+14+cLW2+6;
+    [2,4,7,9,11,13,15].forEach(id=>{
+      const lbl='Q'+id;
+      const lw=ctx.measureText(lbl).width+16;
+      ctx.fillStyle='#B91C1C';
+      rrect(ctx,lgX,BODY_START+10,lw,LGD_H-20,4,'fill','#B91C1C');
+      ctx.fillStyle='#fff'; ctx.font='bold 13px "Noto Sans",sans-serif';
+      ctx.fillText(lbl,lgX+8,lgMid+5);
+      ctx.font='bold 14px "Noto Sans","Noto Sans TC",sans-serif';
+      lgX+=lw+6;
+    });
+    lgX+=14;
+    ctx.fillStyle='#374151';
+    const ncLbl='Non-critical：'; const ncLW2=ctx.measureText(ncLbl).width;
+    ctx.fillText(ncLbl, lgX, lgMid+5);
+    lgX+=ncLW2+6;
+    [1,3,5,6,8,10,12,14,16].forEach(id=>{
+      const lbl='Q'+id;
+      const lw=ctx.measureText(lbl).width+16;
+      if(lgX+lw>W-GX) return;
+      ctx.fillStyle='#1D4ED8';
+      rrect(ctx,lgX,BODY_START+10,lw,LGD_H-20,4,'fill','#1D4ED8');
+      ctx.fillStyle='#fff'; ctx.font='bold 13px "Noto Sans",sans-serif';
+      ctx.fillText(lbl,lgX+8,lgMid+5);
+      ctx.font='bold 14px "Noto Sans","Noto Sans TC",sans-serif';
+      lgX+=lw+6;
+    });
+
+    // ── Cards ──
+    QS.forEach((q,idx)=>{
+      const col=idx%COLS, row=Math.floor(idx/COLS);
+      const cx=GX+col*(CW+CGAP), cy=GRID_TOP+row*(CARD_H+RGAP);
+      const isW=isWeak(q);
+      const v0=answers[String(q.id)]||'';
+
+      // Card background
+      let fill=bgColor||'#FFF';
+      if(bgColor){
+        const y9=answers['9_rct']==='Yes'&&answers['9_nrsi']==='Yes';
+        const y11=answers['11_rct']==='Yes'&&answers['11_nrsi']==='Yes';
+        if(v0==='Yes'||(q.isQ9&&y9)||(q.isQ11&&y11)) fill=mixHex(bgColor,'#F0FDF4',0.5);
+        else if(v0==='Partial Yes') fill=mixHex(bgColor,'#FFFBEB',0.5);
+        else if(v0==='No') fill=mixHex(bgColor,'#FEF2F2',0.4);
+        rrect(ctx,cx,cy,CW,CARD_H,6,'fill',fill);
+      }
+      // Border — red+thick if critical weakness
+      const borderCol=(q.crit&&isW)?'#DC2626':cardBd;
+      const borderW=(q.crit&&isW)?Math.max(bdW,3):bdW;
+      rrect(ctx,cx,cy,CW,CARD_H,6,'stroke',borderCol,borderW);
+      // Left accent bar
+      const accentCol=q.crit?'#B91C1C':'#1D4ED8';
+      ctx.fillStyle=accentCol; ctx.fillRect(cx,cy,6,CARD_H);
+
+      // ── Q# pill (left, vertically centered) ──
+      const pillX=cx+CARD_PAD;
+      const pillY=cy+(CARD_H-Q_PILL_H)/2;
+      rrect(ctx,pillX,pillY,Q_PILL_W,Q_PILL_H,5,'fill',accentCol);
+      ctx.fillStyle='#fff';
+      ctx.font='bold '+(qFs+1)+'px "Noto Sans",sans-serif';
+      const qLabel='Q'+q.id;
+      const qLW=ctx.measureText(qLabel).width;
+      ctx.fillText(qLabel, pillX+(Q_PILL_W-qLW)/2, pillY+Q_PILL_H/2+5);
+
+      // ── Answer badge (right side, vertically centered) ──
+      ctx.font='bold '+qFs+'px "Noto Sans","Noto Sans TC",sans-serif';
+      const af=getAnsFgLocal(q);
+      const ansX=cx+CW-CARD_PAD-ANS_AREA;
+
+      if(q.isQ9||q.isQ11){
+        const pfx=q.isQ9?'9':'11';
+        const rv=answers[pfx+'_rct']||'—';
+        const nv=answers[pfx+'_nrsi']||'—';
+        const rL='RCT: '+rv, nL='NRSI: '+nv;
+        const bwR=Math.min(ctx.measureText(rL).width+16,ANS_AREA);
+        const rfg=rv==='Yes'?'#15803D':rv==='No'?'#DC2626':rv==='Partial Yes'?'#B45309':'#6B7280';
+        const nfg=nv==='Yes'?'#15803D':nv==='No'?'#DC2626':nv==='Partial Yes'?'#B45309':'#6B7280';
+        const badgeH2=qFs+12;
+        const twoH=badgeH2*2+6;
+        const startY=cy+(CARD_H-twoH)/2;
+        rrect(ctx,ansX,startY,bwR,badgeH2,4,'fill',rfg);
+        ctx.fillStyle='#fff'; ctx.fillText(rL,ansX+8,startY+badgeH2-4);
+        rrect(ctx,ansX,startY+badgeH2+6,bwR,badgeH2,4,'fill',nfg);
+        ctx.fillStyle='#fff'; ctx.fillText(nL,ansX+8,startY+badgeH2+6+badgeH2-4);
+      } else {
+        const ad=getAnsDisp(q);
+        const bw=Math.min(ctx.measureText(ad).width+16,ANS_AREA);
+        const badgeH=qFs+12;
+        const badgeY=cy+(CARD_H-badgeH)/2;
+        rrect(ctx,ansX,badgeY,bw,badgeH,4,'fill',af);
+        ctx.fillStyle='#fff'; ctx.fillText(ad,ansX+8,badgeY+badgeH-4);
+      }
+
+      // ── Title (middle, 2 lines max) ──
+      ctx.fillStyle=qTxt;
+      ctx.font='500 '+qFs+'px "Noto Sans",sans-serif';
+      const titleX=cx+CARD_PAD+Q_PILL_W+12;
+      const titleLines=wrapT(ctx,q.en,TITLE_W).slice(0,2);
+      const titleBlockH=titleLines.length*T_LH;
+      const titleStartY=cy+(CARD_H-titleBlockH)/2;
+      titleLines.forEach((l,i)=>{
+        ctx.fillText((i===1&&wrapT(ctx,q.en,TITLE_W).length>2)?l.slice(0,-1)+'…':l,
+          titleX, titleStartY+i*T_LH+qFs);
+      });
+    });
+
+    // Footer
+    const fY=TOT_H-28;
+    ctx.globalAlpha=0.22; ctx.fillStyle=qTxt; ctx.fillRect(0,fY-6,W,1);
+    ctx.globalAlpha=0.45; ctx.fillStyle=qTxt;
+    ctx.font='11px "Noto Sans",sans-serif';
+    ctx.fillText('AMSTAR 2 Appraisal Tool  ·  Shea BJ et al., BMJ 2017;358:j4008  ·  For academic and educational use only',GX,fY+8);
+    ctx.globalAlpha=1;
+
+
+  // ══════════════════════════════════════════════
+  // DETAIL MODE: 每題雙列
+  //   Row 1: Q# pill | 答案 badge | 題目（全寬）
+  //   Row 2: 評讀說明（縮排，灰底）
+  // ══════════════════════════════════════════════
+  } else {
+    const W    = 4960;
+    const SCALE= 2;
+    const DQF  = Math.max(26, qFs*SCALE);
+    const DCF  = Math.max(22, cmFs*SCALE);
+    const DGX  = GX*SCALE;
+    const tblW = W - DGX*2;
+
+    // ── 列高常數 ──
+    const R1_PAD   = 16;           // Row1 上下 padding
+    const R2_PAD   = 14;           // Row2 上下 padding
+    const T_LH     = DQF + 8;      // 題目行距
+    const CM_LH    = DCF + 6;      // 說明行距
+    const BADGE_H  = DQF + 14;     // 答案 badge 高度
+    const PILL_W   = 140;          // Q# pill 寬
+    const PILL_H   = DQF + 16;     // Q# pill 高
+    const ANS_W    = 500;          // 答案 badge 區寬
+    const TTL_X    = DGX + PILL_W + ANS_W + 24; // 題目起始 X
+    const TTL_W    = tblW - PILL_W - ANS_W - 32; // 題目可用寬
+
+    // Measure heights
+    const tmp2 = document.createElement('canvas');
+    tmp2.width = W; tmp2.height = 200;
+    const tc2 = tmp2.getContext('2d');
+
+    const NOTE_X_OFFSET = PILL_W + 14;  // 評讀說明縮排起點
+    const NOTE_W = tblW - NOTE_X_OFFSET - 20;  // 統一的 noteW，測量與繪圖一致
+    const LBL_H = (DCF - 2) + 14;  // 「評讀說明」標題行高度
+
+    const rowPairs = QS.map(q => {
+      // Row 1 height
+      tc2.font = '600 ' + DQF + 'px "Noto Sans",sans-serif';
+      const titleLines = wrapT(tc2, q.en, TTL_W - 16);
+      const ansRows = (q.isQ9 || q.isQ11) ? 2 : 1;
+      const ansH = ansRows * BADGE_H + (ansRows - 1) * 8;
+      const r1H = Math.max(R1_PAD + Math.max(ansH, PILL_H, titleLines.length * T_LH) + R1_PAD, DQF * 3);
+
+      // Row 2 height（含標題行 + 說明文字行 + 上下 padding）
+      const cm = (document.getElementById('cm-' + q.id) || {}).value || '';
+      let r2H = 0;
+      if(cm){
+        tc2.font = DCF + 'px "Noto Sans TC","Noto Sans",sans-serif';
+        const noteLines = wrapT(tc2, cm, NOTE_W);  // 與繪圖一致
+        r2H = R2_PAD + LBL_H + noteLines.length * CM_LH + R2_PAD;
+      }
+      return { r1H, r2H, hasNote: cm.length > 0 };
+    });
+
+    // Total height
+    const HEADER_H2   = HEADER_H * SCALE;
+    const GRADE_H2    = GRADE_H  * SCALE;
+    const BODY_START2 = HEADER_H2 + GRADE_H2 + 18;
+    let totalContent = 0;
+    rowPairs.forEach(p => { totalContent += p.r1H + (p.r2H || 0) + 2; });
+    const TOT_H = BODY_START2 + totalContent + DGX + 40;
+
+    // ── Canvas setup ──
+    const off = document.getElementById('offcanvas');
+    off.width = W; off.height = TOT_H;
+    const ctx = off.getContext('2d');
+    ctx.clearRect(0, 0, W, TOT_H);
+    if(bgColor){ ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, TOT_H); }
+
+    // ── Header bar ──
+    ctx.fillStyle = hBg; ctx.fillRect(0, 0, W, HEADER_H2);
+    ctx.fillStyle = hTxt;
+    ctx.font = 'bold ' + (24*SCALE) + 'px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.fillText('AMSTAR 2 — Critical Appraisal Result', DGX, 38*SCALE);
+    ctx.font = (13*SCALE) + 'px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.globalAlpha = 0.72;
+    ctx.fillText('Shea et al., BMJ 2017;358:j4008   ·   Rater: '+rater+'   ·   SR: '+sr, DGX, 64*SCALE);
+    ctx.globalAlpha = 1;
+
+    // ── Grade bar ──
+    const gb_y = HEADER_H2 + 10*SCALE;
+    const gb_h = GRADE_H2 - 8*SCALE;
+    rrect(ctx, DGX, gb_y, W-DGX*2, gb_h, 8*SCALE, 'fill', gBg);
+    rrect(ctx, DGX, gb_y, W-DGX*2, gb_h, 8*SCALE, 'stroke', gradeFg, SCALE*2);
+    ctx.fillStyle = gradeFg;
+    ctx.font = 'bold ' + ((qFs+6)*SCALE) + 'px "Noto Sans","Noto Sans TC",sans-serif';
+    ctx.fillText('Overall Quality: ' + gradeStr, DGX+16*SCALE, gb_y + gb_h/2 + (qFs+6)*SCALE*0.38);
+
+    // ── Rows ──
+    let rowY = BODY_START2;
+
+    QS.forEach((q, idx) => {
+      const { r1H, r2H, hasNote } = rowPairs[idx];
+      const isW  = isWeak(q);
+      const v0   = answers[String(q.id)] || '';
+      const qBg  = q.crit ? '#B91C1C' : '#1D4ED8';
+
+      // ── ROW 1: Q# | Answer | Title ──
+      let r1Fill = bgColor || '#FFFFFF';
+      if(bgColor){
+        const y9  = answers['9_rct']==='Yes' && answers['9_nrsi']==='Yes';
+        const y11 = answers['11_rct']==='Yes'&& answers['11_nrsi']==='Yes';
+        if(v0==='Yes'||(q.isQ9&&y9)||(q.isQ11&&y11)) r1Fill=mixHex(bgColor,'#F0FDF4',0.45);
+        else if(v0==='Partial Yes') r1Fill=mixHex(bgColor,'#FFFBEB',0.45);
+        else if(isW)                r1Fill=mixHex(bgColor,'#FEF2F2',0.25);
+      }
+      ctx.fillStyle = r1Fill;
+      ctx.fillRect(DGX, rowY, tblW, r1H);
+
+      // Left accent
+      ctx.fillStyle = qBg;
+      ctx.fillRect(DGX, rowY, 6*SCALE, r1H + (hasNote ? r2H + 2 : 0));
+
+      // Q# pill
+      const pillX = DGX + 14;
+      const pillY = rowY + (r1H - PILL_H) / 2;
+      rrect(ctx, pillX, pillY, PILL_W, PILL_H, 6*SCALE, 'fill', qBg);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold ' + (DQF+2) + 'px "Noto Sans",sans-serif';
+      const qLabel = 'Q' + q.id;
+      const qLW = ctx.measureText(qLabel).width;
+      ctx.fillText(qLabel, pillX + (PILL_W-qLW)/2, pillY + PILL_H*0.68);
+
+      // Answer badge(s)
+      const ansX = DGX + PILL_W + 20;
+      const by1  = rowY + R1_PAD;
+      ctx.font = 'bold ' + DQF + 'px "Noto Sans","Noto Sans TC",sans-serif';
+      if(q.isQ9 || q.isQ11){
+        const pfx = q.isQ9 ? '9' : '11';
+        const rv  = answers[pfx+'_rct']  || '—';
+        const nv  = answers[pfx+'_nrsi'] || '—';
+        const rL  = 'RCT: '+rv, nL = 'NRSI: '+nv;
+        const bw  = Math.min(ctx.measureText(rL).width+20, ANS_W-12);
+        const rfg = rv==='Yes'?'#15803D':rv==='No'?'#DC2626':rv==='Partial Yes'?'#B45309':'#6D28D9';
+        const nfg = nv==='Yes'?'#15803D':nv==='No'?'#DC2626':nv==='Partial Yes'?'#B45309':nv==='No meta-analysis conducted'?'#6D28D9':'#6B7280';
+        rrect(ctx, ansX, by1,            bw, BADGE_H, 4*SCALE, 'fill', rfg);
+        ctx.fillStyle=bgTxt; ctx.fillText(rL, ansX+10, by1+BADGE_H-6);
+        rrect(ctx, ansX, by1+BADGE_H+8,  bw, BADGE_H, 4*SCALE, 'fill', nfg);
+        ctx.fillStyle=bgTxt; ctx.fillText(nL, ansX+10, by1+BADGE_H+8+BADGE_H-6);
+      } else {
+        const av  = v0 || 'Not answered';
+        const bw  = Math.min(ctx.measureText(av).width+20, ANS_W-12);
+        const afg = getAnsFgLocal(q);
+        rrect(ctx, ansX, by1, bw, BADGE_H, 4*SCALE, 'fill', afg);
+        ctx.fillStyle=bgTxt; ctx.fillText(av, ansX+10, by1+BADGE_H-6);
+      }
+
+      // Title (full width, all lines)
+      ctx.fillStyle = qTxt;
+      ctx.font = '600 ' + DQF + 'px "Noto Sans",sans-serif';
+      const titleLines = wrapT(ctx, q.en, TTL_W - 16);
+      const titH = titleLines.length * T_LH;
+      const titY = rowY + (r1H - titH) / 2;
+      titleLines.forEach((l, i) => ctx.fillText(l, TTL_X, titY + i*T_LH + DQF));
+
+      // Row 1 bottom divider
+      ctx.strokeStyle = '#CBD5E1'; ctx.globalAlpha = 0.6; ctx.lineWidth = SCALE;
+      ctx.beginPath(); ctx.moveTo(DGX, rowY+r1H); ctx.lineTo(DGX+tblW, rowY+r1H); ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      rowY += r1H + 1;
+
+      // ── ROW 2: Rater notes（灰底，縮排）──
+      if(hasNote){
+        const cm = (document.getElementById('cm-'+q.id)||{}).value||'';
+        const noteX = DGX + NOTE_X_OFFSET;
+
+        // Row 2 background
+        ctx.fillStyle = '#F3F4F6';
+        ctx.fillRect(DGX, rowY, tblW, r2H);
+
+        // Label
+        ctx.fillStyle = '#6B7280';
+        ctx.font = 'bold ' + (DCF-2) + 'px "Noto Sans TC","Noto Sans",sans-serif';
+        ctx.fillText('評讀說明 Rater\'s Notes', noteX, rowY + R2_PAD + (DCF-2));
+
+        // Note text（與測量時用同一個 NOTE_W）
+        ctx.fillStyle = cmTxt;
+        ctx.font = DCF + 'px "Noto Sans TC","Noto Sans",sans-serif';
+        const noteLines = wrapT(ctx, cm, NOTE_W);
+        noteLines.forEach((l, i) =>
+          ctx.fillText(l, noteX, rowY + R2_PAD + LBL_H + i*CM_LH + DCF)
+        );
+
+        // Row 2 bottom divider
+        ctx.strokeStyle = '#CBD5E1'; ctx.globalAlpha = 0.8; ctx.lineWidth = SCALE;
+        ctx.beginPath(); ctx.moveTo(DGX, rowY+r2H); ctx.lineTo(DGX+tblW, rowY+r2H); ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        rowY += r2H + 1;
+      }
+    });
+
+    // ── Footer ──
+    const fY = TOT_H - 32;
+    ctx.globalAlpha = 0.2; ctx.fillStyle = qTxt; ctx.fillRect(0, fY-8, W, SCALE);
+    ctx.globalAlpha = 0.4; ctx.fillStyle = qTxt;
+    ctx.font = (11*SCALE) + 'px "Noto Sans",sans-serif';
+    ctx.fillText('AMSTAR 2 Appraisal Tool  ·  Shea BJ et al., BMJ 2017;358:j4008  ·  For academic and educational use only', DGX, fY+10);
+    ctx.globalAlpha = 1;
+  }
+
+
+  // Copy to visible canvas
+  const vis=document.getElementById('poster-canvas');
+  vis.width=off.width;
+  vis.height=off.height;
+  vis.getContext('2d').drawImage(off,0,0);
+  const lbl=document.getElementById('poster-mode-badge');
+  if(lbl){lbl.style.display='inline-block';lbl.textContent=mode==='simple'?'簡版 Simple':'詳細版 Detailed';}
+  const pw=document.getElementById('poster-wrap');
+  pw.classList.add('show');
+  showDownloadArea(mode, vis);
+  pw.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+
+function getAnsFgSimple(q){
+  // 單一答案欄（非 Q9/Q11）的 badge 顏色
+  const v = answers[String(q.id)] || '';
+  if(v === 'Yes')                      return '#15803D';
+  if(v === 'Partial Yes')              return '#B45309';
+  if(v === 'No')                       return '#DC2626';
+  if(v === 'No meta-analysis conducted') return '#6D28D9';
+  return '#6B7280'; // Not answered
+}
+
+
+function wrapT(ctx,text,maxW){
+  const chars=[...text]; let line=''; const lines=[];
+  for(const c of chars){
+    const t=line+c;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=c;}
+    else line=t;
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+function rrect(ctx,x,y,w,h,r,mode,color,lw=1){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  if(mode==='fill'){ctx.fillStyle=color;ctx.fill();}
+  else{ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.stroke();}
+}
+
+function mixHex(h1,h2,r){
+  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1]=p(h1);const [r2,g2,b2]=p(h2);
+  const rr=Math.round(r1*(1-r)+r2*r), gg=Math.round(g1*(1-r)+g2*r), bb=Math.round(b1*(1-r)+b2*r);
+  return `rgb(${rr},${gg},${bb})`;
+}
+
+function downloadPoster(fmt){
+  fmt = fmt || 'png';
+  const vis = document.getElementById('poster-canvas');
+  const sr = (gv('m-sr')||'AMSTAR2').replace(/\s+/g,'_');
+  let dataURL;
+
+  if(fmt === 'jpeg'){
+    // JPEG 不支援透明，先建立白底 canvas 再疊上海報內容
+    const flat = document.createElement('canvas');
+    flat.width = vis.width;
+    flat.height = vis.height;
+    const fc = flat.getContext('2d');
+    const transparent = document.getElementById('c-trans').checked;
+    fc.fillStyle = transparent ? '#FFFFFF' : (gv('c-bg') || '#FFFFFF');
+    fc.fillRect(0, 0, flat.width, flat.height);
+    fc.drawImage(vis, 0, 0);
+    dataURL = flat.toDataURL('image/jpeg', 0.95);
+  } else {
+    dataURL = vis.toDataURL('image/png');
+  }
+
+  const a = document.createElement('a');
+  a.download = 'AMSTAR2_' + sr + (fmt === 'jpeg' ? '.jpg' : '.png');
+  a.href = dataURL;
+  a.click();
+}
+
+init();
+</script>
+
+<script>
+const AMSTAR_REF_CONTENT = `<div class="pdf-html-content">
+<div class="ph-header">
+  <h1>AMSTAR 2 指引文件</h1>
+  <div class="ph-en-title">AMSTAR 2 Guidance Document</div>
+  <div class="ph-series">繁體中文英中對照翻譯　｜　Chang Gung Memorial Hospital Linkou　｜　EBM / 臨床藥師教學參考</div>
+</div>
+
+<h2>前言（Introduction）</h2>
+<p>AMSTAR 2 的許多條目撰寫時已力求自明。然而，相關議題通常較為複雜，且在對廣泛介入措施進行判斷時，往往存在不同解讀空間。本文為 AMSTAR 2 提供額外指引，內容與已發表論文有所重疊——此乃刻意為之，因本文件旨在作為獨立使用的附錄文件。</p>
+<p>我們強調，本文為指引性質——它提示我們認為在進行明確界定（通常為臨床）介入措施系統性回顧評鑑時，各標準應如何應用。個別使用者當然可能在處理個別領域及做出整體評鑑時偏離本指引。我們要求使用者在這樣做時記錄這些偏差，以便他人從其經驗中獲益。</p>
+<div class="ph-box ph-box-warning">
+  <b>重要提醒：</b>AMSTAR 2 並非設計來產生整體「分數」。高分可能掩蓋特定領域的關鍵缺陷，例如文獻搜索不足，或未能評估納入系統性回顧之個別研究的 risk of bias（RoB，偏差風險）。在對系統性回顧進行整體評級時，必須考量關鍵領域的缺陷——這些缺陷可能大幅削弱對系統性回顧的信心程度。
+</div>
+<div class="ph-box ph-box-key">
+  ★ <b>關鍵條目（Critical domains）：</b>條目 2、4、7、9、11、13、15 被視為關鍵條目，在任何整體評級中若存在缺陷，對整體評鑑的影響遠大於非關鍵條目。
+</div>
+
+<h2>條目 1：研究問題和納入標準是否包含 PICO 的各組成要素？</h2>
+<p class="ph-en-title">Did the research questions and inclusion criteria for the review include the components of PICO?</p>
+<p>使用 PICO 描述（population 族群、intervention 介入措施、control group 對照組、outcome 結局）作為研究問題的組織框架是常見做法。若時間框架（timeframe）對於判斷研究能否捕捉相關臨床結局至關重要（例如，介入措施的效果僅在數年後才能預期），有時亦應納入。PICO 確定了系統性回顧報告中應詳細描述的要素，應使評鑑者能夠判斷研究的選擇及其可合併性，並使回顧使用者能夠確定結果的適用性。</p>
+<p>系統性回顧的作者並非總是明確說明 PICO 的各要素，但應可透過仔細閱讀摘要、前言及方法章節加以辨識。</p>
+<p><b>評分標準：</b>若評鑑者有把握 PICO 的四個要素在報告中某處均有描述，則評分為「Yes（是）」。</p>
+
+<h2>★ 關鍵條目 2：回顧報告是否明確聲明在進行回顧之前已確立方法，並對偏離方案的任何重大偏差提供說明？</h2>
+<p class="ph-en-title">Did the report of the review contain an explicit statement that the review methods were established prior to conduct of the review and did the report justify any significant deviations from the protocol?</p>
+<p>系統性回顧是一種觀察性研究，回顧方法應在開始前達成共識。遵循完善的 protocol（方案）可降低回顧中的偏差風險。作者應證明其依照具有獨立驗證的書面 protocol 工作——可採用以下形式：</p>
+<ul>
+  <li>在登記機構（如 PROSPERO）登記</li>
+  <li>在開放出版期刊（如 BMJ Open）發表</li>
+  <li>向研究辦公室或研究倫理委員會提交有日期的申請</li>
+</ul>
+<p><b>評分標準：</b></p>
+<ul>
+  <li>「Partial Yes（部分是）」：至少在報告中聲明研究問題和方法已提前規劃</li>
+  <li>「Yes（是）」：作者證明在進行回顧之前，已依照具有獨立驗證（由登記機構或其他獨立機構）的書面 protocol 工作</li>
+</ul>
+<p>評鑑者應將已發表回顧報告與已登記的 protocol 進行比較（若後者存在）。若有偏離 protocol 之處，評鑑者應確認這些偏差是否已由回顧作者報告並說明理由。明顯未解釋的差異應導致評級下調。</p>
+
+<h2>條目 3：回顧作者是否解釋了選擇納入特定研究設計的原因？</h2>
+<p class="ph-en-title">Did the review authors explain their selection of the study designs for inclusion in the review?</p>
+<p>系統性回顧中納入研究類型的選擇不應是任意的，作者應說明其遵循的策略。一般規則為：作者首先應詢問，若回顧僅限於 RCTs 是否會對治療效果的摘要不完整。這可能是因為：</p>
+<ul>
+  <li>沒有相關 RCTs</li>
+  <li>現有 RCTs 缺少某些結局（通常為危害）</li>
+  <li>統計檢定力不足</li>
+  <li>族群限制過嚴</li>
+  <li>對照/介入治療不具代表性</li>
+</ul>
+<p>若上述問題的答案為「是」，則納入 NRSIs（nonrandomized studies of interventions，非隨機介入措施研究）是合理的。反之，若僅限於 RCTs，作者應論證其能提供所關注效果的完整圖像。同時納入 RCTs 和 NRSIs 可能有助於獲得關於介入措施效果和危害的完整圖像。</p>
+
+<h2>★ 關鍵條目 4：回顧作者是否使用了全面的文獻搜索策略？</h2>
+<p class="ph-en-title">Did the review authors use a comprehensive literature search strategy?</p>
+<p><b>全面文獻搜索的基本要求：</b></p>
+<ul>
+  <li>至少應搜索兩個書目數據庫，報告應包含搜索年份和使用的數據庫（如 CENTRAL、EMBASE、MEDLINE）</li>
+  <li>應報告關鍵詞和/或 MeSH 術語，且完整搜索策略應可按要求提供</li>
+  <li>搜索應透過查閱已發表的回顧、專業登記機構或特定領域專家，以及審查已找到研究的參考文獻清單來補充</li>
+  <li>應尋找所有相關語言的出版物，語言限制時應提供說明</li>
+  <li>灰色文獻（grey literature）：在某些情況下搜索灰色文獻是重要的，包括試驗登記機構、會議摘要、學位論文及個人網站上的未發表報告</li>
+</ul>
+<p><b>評分標準：</b>評鑑者應確信回顧作者已處理搜索的所有相關面向，方可評分「Yes（是）」。</p>
+
+<h2>條目 5：回顧作者是否以雙人方式進行研究選擇？</h2>
+<p class="ph-en-title">Did the review authors perform study selection in duplicate?</p>
+<p>最佳實踐要求兩位回顧作者共同確定研究是否符合納入系統性回顧的資格——此過程涉及對照研究問題各要素，核對研究特徵（從標題、摘要和全文）。</p>
+<ul>
+  <li>應至少有兩位獨立評鑑者進行研究選擇</li>
+  <li>當研究選擇出現分歧時，應使用共識流程</li>
+  <li>若一個人進行所有研究選擇，第二位審查者應在具代表性的研究樣本上核對一致性，且應達到 Kappa ≥ 0.80（強一致性）</li>
+</ul>
+
+<h2>條目 6：回顧作者是否以雙人方式進行資料提取？</h2>
+<p class="ph-en-title">Did the review authors perform data extraction in duplicate?</p>
+<p>與條目 5 相同，應至少有兩位獨立評鑑者進行資料提取。分歧時應使用共識流程。若一個人進行資料提取，第二位審查者應在研究樣本上核對一致性，且應達到 Kappa ≥ 0.80。</p>
+
+<h2>★ 關鍵條目 7：回顧作者是否提供了排除研究的清單並說明排除原因？</h2>
+<p class="ph-en-title">Did the review authors provide a list of excluded studies and justify the exclusions?</p>
+<p>本條目要求回顧作者提供每項潛在相關研究的完整清單，並說明排除各研究的理由。不納入研究可能基於多種原因，包括不適當/不相關的族群、介入措施和對照組。</p>
+<div class="ph-box ph-box-warning">
+  <b>重要提醒：</b>排除不應基於 risk of bias（偏差風險）——RoB 在回顧過程的後期另行處理。未說明理由的排除可能使回顧結果產生偏差。我們鼓勵在回顧早期階段採取較寬鬆的納入標準。
+</div>
+
+<h2>條目 8：回顧作者是否充分描述了納入的研究？</h2>
+<p class="ph-en-title">Did the review authors describe the included studies in adequate detail?</p>
+<p>應提供研究的受試者、介入措施、對照組、結局、設計、分析及研究場所的描述。描述的詳細程度應足以使評鑑者或使用者判斷：</p>
+<ul>
+  <li>研究是否被適當選擇（相對於 PICO 架構）</li>
+  <li>研究族群和介入措施是否與其自身的實踐或政策相關</li>
+</ul>
+<p>這些描述因素也為研究介入效果異質性提供了框架（例如按劑量、年齡範圍、臨床場所等）。</p>
+
+<h2>★ 關鍵條目 9：回顧作者是否使用了令人滿意的技術來評估納入研究的 Risk of Bias（RoB，偏差風險）？</h2>
+<p class="ph-en-title">Did the review authors use a satisfactory technique for assessing the risk of bias (RoB) in individual studies that were included in the review?</p>
+<p>這是評鑑任何系統性回顧的關鍵部分，尤其是那些包含 NRSIs 的回顧。關鍵評鑑問題是：回顧作者在總結和解讀結果時是否考慮了偏差風險。</p>
+<p>回顧作者應使用系統性方法進行 RoB 評估，最好使用正式開發的評級工具。常用工具包括：Newcastle Ottawa Scale、SIGN、MMAT（Mixed Methods Appraisal Tool）。最全面的評估工具是 Cochrane 的 ROBINS-I 工具。</p>
+
+<div class="ph-box ph-box-example">
+  <h4>NRSIs 的重要偏差領域（摘自 ROBINS-I / ACROBAT-NRSI）</h4>
+  <p><b>Confounding（混雜）：</b>發生於分析時未能分離兩個相關介入措施或暴露因素的效果。在介入措施研究中，混雜亦可能與治療適應症相關——例如，當一種藥物優先給予共病率較高的患者，而這些共病狀況與感興趣的結局相關時。通常認為即使是複雜的技術也無法完全調整所有混雜因素。</p>
+  <p><b>Sample selection bias（樣本選擇偏差）：</b>發生於受試者以有偏差的方式被抽樣，直接扭曲了暴露因素與結局之間的真實關係。選擇的時機也很重要——若受試者在登記前已使用某藥物一段時間（prevalent users 現有使用者），他們將是一個耐受性更好、不良結局風險更低的群體。現代藥物流行病學研究因此招募「new users（新使用者）」。</p>
+  <p><b>Bias in measurement of exposures and outcomes（暴露因素和結局測量中的偏差）：</b>若沒有即時準確的記錄，暴露因素或治療的測量可能被錯誤分類（misclassification）。若此錯誤為 non-differential（非差異性的），它將是朝向無效假設的偏差（bias to the null）。</p>
+  <p><b>Selective reporting of outcomes and analyses（結局和分析的選擇性報告）：</b>若結局未預先指定，研究者可能傾向於分析多個結局，並選擇性地報告那些在暴露組和非暴露組之間出現差異的結局。審查者應確定研究作者是否預先指定了結局和分析方法。</p>
+</div>
+
+<h2>條目 10：回顧作者是否報告了納入研究的資金來源？</h2>
+<p class="ph-en-title">Did the review authors report on the sources of funding for the studies included in the review?</p>
+<p>多項研究顯示，商業贊助的研究比獨立資助的研究更可能出現有利於贊助者產品的發現。回顧作者應記錄每項納入研究的資金來源，或記錄研究報告未提供此資訊。</p>
+
+<h2>★ 關鍵條目 11：若進行了 meta-analysis（統合分析），回顧作者是否使用了適當的統計合併方法？</h2>
+<p class="ph-en-title">If meta-analysis was justified did the review authors use appropriate methods for statistical combination of results?</p>
+<p>回顧作者應在回顧 protocol 中明確說明其進行 meta-analysis 決策的原則，包括希望獲得單一合併效果估計值的意願，以及研究在族群、對照組和介入措施方面的可比性。</p>
+<div class="ph-box ph-box-key">
+  <b>NRSIs 的特殊注意事項：</b>
+  <ul>
+    <li>NRSIs 的研究族群規模差異極大（從數十至數十萬參與者），若與較小 RCTs 合併，合併估計值將由 NRSIs 數據主導</li>
+    <li>NRSIs 的結果可能受到多種偏差影響，導致整體合併估計值精確但存在偏差</li>
+    <li>回顧作者應分別報告不同研究類型的合併估計值</li>
+    <li>NRSIs 的信賴區間是在假設無偏差的前提下計算的，應謹慎解讀</li>
+    <li>合併 NRSIs 結果時，通常應合併完全調整的效果估計值，而非原始數據</li>
+    <li>異質性在 NRSI 回顧中尤為重要，因不同研究可能使用更多樣的方法</li>
+  </ul>
+</div>
+
+<h2>★ 關鍵條目 12：若進行了 meta-analysis，回顧作者是否評估了個別研究的 RoB 對 meta-analysis 結果的潛在影響？</h2>
+<p class="ph-en-title">If meta-analysis was performed did the review authors assess the potential impact of RoB in individual studies on the results of the meta-analysis or other evidence synthesis?</p>
+<p>若回顧作者納入了品質不一的 RCTs，應透過回歸分析或估計僅含低 RoB 研究的合併效果量來評估其影響。對於 NRSIs，應估計僅含低或中度 RoB 研究的合併效果量。即使未進行 meta-analysis，作者仍應對 RoB 對個別研究結果的可能影響提供評論。</p>
+
+<h2>★ 關鍵條目 13：回顧作者在解讀/討論回顧結果時是否考慮了個別研究的 RoB？</h2>
+<p class="ph-en-title">Did the review authors account for RoB in individual studies when interpreting/discussing the results of the review?</p>
+<p>即使未進行 meta-analysis，回顧作者在解讀回顧結果時也應討論 RoB 的影響。這在以下情況下尤為重要：包含不同 RoB 的 RCTs 的回顧，以及任何包含 NRSIs 的回顧。此討論不應僅限於 RoB 對合併估計值的影響，還應考慮 RoB 是否可能解釋個別研究結果之間的差異。若作者做出可能影響臨床照護或政策的任何建議，應明確考慮 RoB。</p>
+
+<h2>條目 14：回顧作者是否對回顧結果中觀察到的任何異質性提供了令人滿意的解釋和討論？</h2>
+<p class="ph-en-title">Did the review authors provide a satisfactory explanation for, and discussion of, any heterogeneity observed in the results of the review?</p>
+<p>與 RCTs 相比，NRSIs 結果中存在更多潛在的異質性來源，包括不同研究設計、不同分析方法、不同族群以及不同介入強度。回顧作者應探索這些可能性，並討論異質性對結果、結論及任何建議的影響。</p>
+
+<h2>★ 關鍵條目 15：若進行了定量合成，回顧作者是否對 publication bias（小研究偏差）進行了充分調查並討論其對回顧結果的可能影響？</h2>
+<p class="ph-en-title">If they performed quantitative synthesis did the review authors carry out an adequate investigation of publication bias (small study bias) and discuss its likely impact on the results of the review?</p>
+<p>發表偏差（publication bias）是一個重要議題，但對於回顧作者和評鑑者來說可能難以完全解決。通常使用統計檢驗或圖形顯示（如漏斗圖 funnel plot），若結果為陽性，則表明存在 PB；但陰性結果不能保證沒有 PB，因為這些檢驗不夠靈敏。</p>
+<p><b>關鍵問題：</b></p>
+<ul>
+  <li>作者是否透過更深入和密集的文獻搜索，盡力識別 publication bias</li>
+  <li>作者在解讀和討論結果時，是否意識到 publication bias 的可能影響</li>
+  <li>作者是否進行了敏感性分析，以確定需要多少缺失的「無效」研究才能使其所獲結果無效</li>
+</ul>
+<p>PB 的重要性在一定程度上取決於情境——例如，一系列看似方法學上嚴謹的行業資助研究可能比類似的獨立研究更容易受到 PB 的影響。</p>
+
+<h2>條目 16：回顧作者是否報告了任何潛在的利益衝突，包括進行回顧所獲得的任何資助？</h2>
+<p class="ph-en-title">Did the review authors report any potential sources of conflict of interest, including any funding they received for conducting the review?</p>
+<p>由有既得利益的機構資助的個別研究可能產生更有利於介入措施的結果。同樣的假設適用於系統性回顧，作者應報告其直接資助來源。但對回顧作者利益衝突的評估不止於此：</p>
+<ul>
+  <li>回顧可能是獨立資助的，但作者與納入系統性回顧的產品製造商存在關聯</li>
+  <li>職業利益衝突（professional conflicts of interest）很強大，但較難辨識，因為它們很少被報告</li>
+  <li>此類潛在利益衝突雖難以評估，但可從回顧者在被審查領域大量發表論文且其研究被納入系統性回顧這一事實中加以推斷</li>
+</ul>
+<p>雖然可以認為競爭利益的影響可能表現為其他偏差領域的缺陷，但我們認為本條目應始終單獨評分。</p>
+
+<h2>AMSTAR 2 條目總覽表</h2>
+<table>
+  <tr><th>條目</th><th>評鑑問題（中英對照）</th><th>關鍵條目</th><th>評分選項</th></tr>
+  <tr><td>1</td><td>研究問題和納入標準是否包含 PICO 的各組成要素？</td><td>否</td><td>Yes / No</td></tr>
+  <tr><td>2</td><td>回顧報告是否明確聲明在進行回顧之前已確立方法？</td><td>★ 是</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>3</td><td>回顧作者是否解釋了選擇納入特定研究設計的原因？</td><td>否</td><td>Yes / No</td></tr>
+  <tr><td>4</td><td>回顧作者是否使用了全面的文獻搜索策略？</td><td>★ 是</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>5</td><td>回顧作者是否以雙人方式進行研究選擇？</td><td>否</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>6</td><td>回顧作者是否以雙人方式進行資料提取？</td><td>否</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>7</td><td>回顧作者是否提供了排除研究的清單並說明排除原因？</td><td>★ 是</td><td>Yes / No</td></tr>
+  <tr><td>8</td><td>回顧作者是否充分描述了納入的研究？</td><td>否</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>9</td><td>回顧作者是否使用了令人滿意的技術評估納入研究的 RoB？</td><td>★ 是</td><td>Yes / Partial Yes / No</td></tr>
+  <tr><td>10</td><td>回顧作者是否報告了納入研究的資金來源？</td><td>否</td><td>Yes / No</td></tr>
+  <tr><td>11</td><td>（若進行 meta-analysis）回顧作者是否使用了適當的統計合併方法？</td><td>★ 是</td><td>Yes / No / NA</td></tr>
+  <tr><td>12</td><td>（若進行 meta-analysis）回顧作者是否評估了個別研究 RoB 對 meta-analysis 結果的潛在影響？</td><td>★ 是</td><td>Yes / No / NA</td></tr>
+  <tr><td>13</td><td>回顧作者在解讀/討論結果時是否考慮了個別研究的 RoB？</td><td>★ 是</td><td>Yes / No</td></tr>
+  <tr><td>14</td><td>回顧作者是否對觀察到的任何異質性提供了令人滿意的解釋和討論？</td><td>否</td><td>Yes / No / NA</td></tr>
+  <tr><td>15</td><td>（若進行定量合成）回顧作者是否對 publication bias 進行了充分調查並討論其影響？</td><td>★ 是</td><td>Yes / No / NA</td></tr>
+  <tr><td>16</td><td>回顧作者是否報告了任何潛在的利益衝突，包括進行回顧所獲得的任何資助？</td><td>否</td><td>Yes / No</td></tr>
+</table>
+<div class="ph-box ph-box-key">
+  ★ <b>關鍵條目（Critical domains）：</b>條目 2、4、7、9、11、12、13、15；在整體評鑑中若存在缺陷，對結論的影響遠大於非關鍵條目。<br>
+  NA = Not applicable（不適用）；RoB = Risk of Bias（偏差風險）；PICO = Population, Intervention, Comparison, Outcome
+</div>
+
+<h2>整體評鑑等級（Overall Rating）</h2>
+<table>
+  <tr><th>整體等級</th><th>定義</th></tr>
+  <tr><td>High（高）</td><td>無關鍵領域缺陷，且非關鍵領域缺陷 ≤1 個；可信賴此回顧提供了對所研究問題的準確且全面的摘要</td></tr>
+  <tr><td>Moderate（中等）</td><td>無關鍵領域缺陷，且非關鍵領域缺陷 ≤2 個；此回顧在所研究問題上的準確總結有一定的信心</td></tr>
+  <tr><td>Low（低）</td><td>1 個關鍵領域缺陷，且非關鍵領域缺陷不超過任何數量；在所研究問題上的結論對準確性的信心有限</td></tr>
+  <tr><td>Critically low（極低）</td><td>≥1 個關鍵領域缺陷，且非關鍵領域缺陷不超過任何數量；此回顧不應被用於為所研究問題提供準確和全面的摘要</td></tr>
+</table>
+
+<div class="ph-footer-cite">原文引用：Shea BJ et al. AMSTAR 2: a critical appraisal tool for systematic reviews that include randomised or non-randomised studies of healthcare interventions, or both. BMJ. 2017;358:j4008.<br>本文件為 AMSTAR 2 guidance document 英中對照翻譯版本，供 Chang Gung Memorial Hospital Linkou EBM 教學及臨床藥師參考使用。</div>
+</div>
+`;
+
+function showAmstarRefModal() {
+  const existing = document.getElementById('amstarRefModal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'amstarRefModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#fdfbf6;border:1px solid #e0dccf;border-radius:14px;max-width:780px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+      <div style="padding:14px 20px;border-bottom:1px solid #e0dccf;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#f5f1e8;">
+        <span style="font-weight:700;color:#1a1a2e;font-size:14px;">📖 AMSTAR 2 指引文件 Guidance Document</span>
+        <button onclick="document.getElementById('amstarRefModal').remove()" style="background:#e74c3c;border:none;color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">✕ 關閉</button>
+      </div>
+      <div style="overflow-y:auto;padding:24px 28px;flex:1;">${AMSTAR_REF_CONTENT}</div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+}
+</script>
+
+<style>
+.pdf-html-content {
+  font-size: 14px; line-height: 1.9; color: #2b2b2b;
+  background: #fdfbf6; font-family: 'Microsoft JhengHei', 'PingFang TC', 'Segoe UI', sans-serif;
+}
+.pdf-html-content h1 { font-size: 19px; font-weight: 800; margin-bottom: 6px; color: #1a1a2e; }
+.pdf-html-content h2 { font-size: 16px; font-weight: 700; margin: 22px 0 12px; color: #4a3a7a; border-bottom: 2px solid #e0d8f0; padding-bottom: 7px; }
+.pdf-html-content h3 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; color: #2c5fa8; }
+.pdf-html-content h4 { font-size: 14px; font-weight: 700; margin: 12px 0 6px; color: #333; }
+.pdf-html-content p { margin-bottom: 11px; color: #3d3d3d; }
+.pdf-html-content p.ph-en-title { font-size: 12px; color: #777; font-style: italic; margin: 2px 0 10px; }
+.pdf-html-content ul, .pdf-html-content ol { margin: 8px 0 14px 22px; color: #3d3d3d; }
+.pdf-html-content li { margin-bottom: 7px; }
+.pdf-html-content table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 18px; background: #fff; }
+.pdf-html-content th { background: #f0ebf9; padding: 8px 11px; text-align: left; border: 1px solid #ddd5ec; color: #4a3a7a; font-weight: 700; }
+.pdf-html-content td { padding: 8px 11px; border: 1px solid #e8e4dc; color: #3d3d3d; vertical-align: top; background: #fff; }
+.pdf-html-content tr:nth-child(even) td { background: #faf8f3; }
+.pdf-html-content .ph-header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 3px solid #4a3a7a; }
+.pdf-html-content .ph-series { font-size: 11px; color: #2c5fa8; margin-bottom: 8px; font-weight: 600; }
+.pdf-html-content .ph-en-title { font-size: 12px; color: #777; font-style: italic; margin: 4px 0; }
+.pdf-html-content .ph-box { border-radius: 8px; padding: 13px 16px; margin: 14px 0; border-left: 4px solid; }
+.pdf-html-content .ph-box-key { background: #eef8ee; border-color: #4caf50; }
+.pdf-html-content .ph-box-warning { background: #fdf6e3; border-color: #e0a824; }
+.pdf-html-content .ph-box-example { background: #f5f0fb; border-color: #7c5cbf; }
+.pdf-html-content .ph-box p, .pdf-html-content .ph-box li { color: #333; }
+.pdf-html-content .ph-box h3, .pdf-html-content .ph-box h4 { margin-top: 0; }
+.pdf-html-content .ph-footer-cite { margin-top: 22px; padding-top: 14px; border-top: 1px solid #e0dccf; font-size: 11px; color: #999; font-style: italic; }
+.pdf-html-content b { color: #1a1a2e; }
+</style>
+</body>
+</html>
