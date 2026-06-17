@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICEMAN 互動教學工具</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --card: #22263a;
+  --border: #2e3352;
+  --accent: #5b8dee;
+  --accent2: #7c5cbf;
+  --green: #2ecc71;
+  --yellow: #f39c12;
+  --red: #e74c3c;
+  --orange: #e67e22;
+  --text: #e8eaf0;
+  --muted: #8891b4;
+  --tag-bg: #2a2f45;
+
+  --cred-vlow: #3a1a1a;
+  --cred-low:  #2e2010;
+  --cred-mod:  #1a2e20;
+  --cred-high: #0f2040;
+
+  --left-col:  #e74c3c;
+  --right-col: #2ecc71;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+header {
+  background: linear-gradient(135deg, #1a1530 0%, #0f1117 60%);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px 14px;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+header .logo { font-size: 20px; font-weight: 900; letter-spacing: 1px; color: var(--accent2); }
+header .sub  { font-size: 12px; color: var(--muted); }
+.progress-wrap { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.progress-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.progress-bar { display: flex; gap: 3px; }
+.p-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background .3s; }
+.p-dot.done   { background: var(--green); }
+.p-dot.active { background: var(--accent2); }
+
+/* ── Layout ── */
+.app { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Sidebar ── */
+aside {
+  width: 220px; min-width: 180px; background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 14px 10px;
+  flex-shrink: 0;
+}
+.nav-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 8px; padding-left: 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  cursor: pointer; transition: background .15s;
+  font-size: 12px; color: var(--muted);
+  border: none; background: none; width: 100%; text-align: left;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--card); color: var(--accent2); font-weight: 700; }
+.nav-item.done   { color: var(--green); }
+.nav-item.done .q-num { background: var(--green); color: #fff; }
+.q-num {
+  font-size: 10px; font-weight: 800; width: 20px; height: 20px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--border); color: var(--muted); flex-shrink: 0;
+}
+.nav-item.active .q-num { background: var(--accent2); color: #fff; }
+
+.side-summary { padding: 8px 4px; }
+.side-cred {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 6px; border-radius: 6px; margin-bottom: 4px;
+  font-size: 11px; background: var(--card);
+}
+.side-cred .label { color: var(--muted); flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-cred .val { font-weight: 700; font-size: 11px; margin-left:4px; }
+
+/* ── Main ── */
+main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.screen { display: none; max-width: 860px; margin: 0 auto; }
+.screen.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
+}
+.card h2 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.card h3 { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 10px; }
+.card p  { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* ── Info boxes ── */
+.info-box {
+  border-radius: 8px; padding: 11px 14px; margin: 8px 0;
+  border-left: 3px solid; font-size: 13px; line-height: 1.7;
+}
+.info-blue   { background: #1a2240; border-color: var(--accent); }
+.info-green  { background: #12261c; border-color: var(--green); }
+.info-yellow { background: #261f0e; border-color: var(--yellow); }
+.info-red    { background: #2a1010; border-color: var(--red); }
+.info-purple { background: #1e1030; border-color: var(--accent2); }
+
+/* ── Prelim fields ── */
+.field-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.field-row { display: flex; flex-direction: column; gap: 4px; }
+.field-row label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field-row input, .field-row select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none;
+  transition: border-color .15s;
+}
+.field-row input:focus, .field-row select:focus { border-color: var(--accent2); }
+.radio-inline { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.radio-inline label {
+  display: flex; align-items: center; gap: 5px; font-size: 13px;
+  cursor: pointer; color: var(--text); font-weight: normal;
+}
+.radio-inline input[type="radio"] { accent-color: var(--accent2); }
+
+/* ── ICEMAN question card ── */
+.q-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; margin-bottom: 14px; overflow: hidden;
+  transition: border-color .2s;
+}
+.q-card.answered { border-color: var(--accent2); }
+.q-card.rated-left  { border-color: var(--left-col); }
+.q-card.rated-right { border-color: var(--right-col); }
+
+.q-header {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 18px; background: var(--card);
+  border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.q-num-big {
+  font-size: 11px; font-weight: 900; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 20px; background: var(--accent2);
+  color: #fff; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.q-title-en { font-size: 13px; font-weight: 700; color: var(--text); }
+.q-title-zh { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.q-na-badge {
+  margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: var(--border); color: var(--muted); white-space: nowrap; align-self: center;
+}
+
+.q-body { padding: 16px 18px; }
+
+/* ── 4-option scale ── */
+.scale-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.scale-opt {
+  border: 2px solid var(--border); border-radius: 10px; padding: 10px 8px;
+  cursor: pointer; transition: all .15s; text-align: center;
+  background: var(--bg);
+}
+.scale-opt:hover { border-color: var(--accent2); background: var(--card); }
+.scale-opt.selected-left  { border-color: var(--left-col);  background: rgba(231,76,60,.12); }
+.scale-opt.selected-right { border-color: var(--right-col); background: rgba(46,204,113,.12); }
+.scale-opt .opt-label { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.scale-opt .opt-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.scale-opt.sel-1 .opt-label { color: var(--red); }
+.scale-opt.sel-2 .opt-label { color: var(--orange); }
+.scale-opt.sel-3 .opt-label { color: #a8d060; }
+.scale-opt.sel-4 .opt-label { color: var(--green); }
+
+/* ── Direction indicator ── */
+.dir-bar {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted); margin-bottom: 12px;
+}
+.dir-arrow { flex: 1; height: 3px; border-radius: 2px; }
+.dir-left  { background: linear-gradient(to right, var(--left-col), transparent); }
+.dir-right { background: linear-gradient(to left, var(--right-col), transparent); }
+
+/* ── Comment box ── */
+.comment-wrap { margin-top: 10px; }
+.comment-wrap label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+.comment-wrap textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 10px; border-radius: 8px;
+  font-size: 12px; resize: vertical; min-height: 50px; outline: none;
+  font-family: inherit; transition: border-color .15s;
+}
+.comment-wrap textarea:focus { border-color: var(--accent2); }
+
+/* ── Overall credibility scale ── */
+.cred-scale {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 14px 0;
+}
+.cred-opt {
+  border: 2px solid var(--border); border-radius: 12px; padding: 14px 10px;
+  cursor: pointer; text-align: center; transition: all .2s; background: var(--bg);
+}
+.cred-opt:hover { transform: translateY(-1px); }
+.cred-opt.sel-vlow { border-color: var(--red);    background: var(--cred-vlow); }
+.cred-opt.sel-low  { border-color: var(--orange);  background: var(--cred-low); }
+.cred-opt.sel-mod  { border-color: var(--yellow);  background: var(--cred-mod); }
+.cred-opt.sel-high { border-color: var(--green);   background: var(--cred-high); }
+.cred-icon { font-size: 24px; margin-bottom: 6px; }
+.cred-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+.cred-name-zh { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.cred-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.cred-opt.sel-vlow .cred-name { color: var(--red); }
+.cred-opt.sel-low  .cred-name { color: var(--orange); }
+.cred-opt.sel-mod  .cred-name { color: var(--yellow); }
+.cred-opt.sel-high .cred-name { color: var(--green); }
+
+/* ── Decision guide ── */
+.decision-table { margin: 12px 0; }
+.decision-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;
+  border: 1px solid var(--border); background: var(--bg); font-size: 12px;
+}
+.decision-row .arrow { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.decision-row .cond { flex: 1; color: var(--muted); }
+.decision-row .result { font-weight: 700; white-space: nowrap; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 9px 20px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+}
+.btn-primary { background: var(--accent2); color: #fff; }
+.btn-primary:hover { background: #6a4aad; }
+.btn-ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent2); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ── Result ── */
+.result-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 800;
+  border: 2px solid;
+}
+.badge-vlow { background: var(--cred-vlow); color: var(--red);    border-color: var(--red); }
+.badge-low  { background: var(--cred-low);  color: var(--orange); border-color: var(--orange); }
+.badge-mod  { background: var(--cred-mod);  color: var(--yellow); border-color: var(--yellow); }
+.badge-high { background: var(--cred-high); color: var(--green);  border-color: var(--green); }
+
+/* ── Table ── */
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+th { background: var(--surface); padding: 8px 10px; text-align: left; border: 1px solid var(--border); color: var(--accent2); font-weight: 700; }
+td { padding: 8px 10px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+tr:hover td { background: var(--surface); }
+
+/* ── NA toggle ── */
+.na-toggle {
+  display: flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--muted); cursor: pointer; margin-bottom: 12px;
+  user-select: none;
+}
+.na-toggle input { accent-color: var(--accent2); }
+.na-toggle.checked { color: var(--accent2); }
+
+/* ── Score tracker ── */
+.score-dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.score-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--border); transition: background .2s;
+}
+.score-dot.left  { background: var(--left-col); }
+.score-dot.right { background: var(--right-col); }
+.score-dot.na    { background: var(--muted); }
+
+/* ── Footer ── */
+footer {
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 8px 24px; text-align: center;
+  font-size: 12px; color: var(--muted);
+}
+footer b { color: var(--text); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media(max-width:600px) {
+  .scale-grid { grid-template-columns: 1fr 1fr; }
+  .cred-scale { grid-template-columns: 1fr 1fr; }
+  .app { flex-direction: column; }
+  aside { width: 100%; max-height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">ICEMAN</div>
+    <div class="sub">Instrument for assessing the Credibility of Effect Modification ANalyses（v1.1）互動教學工具</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label" id="progressLabel">0 / 9 已完成</div>
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside>
+    <div class="nav-label" style="margin-bottom:6px;">📋 評估流程</div>
+    <button class="nav-item active" onclick="goScreen('intro')" id="nav-intro">
+      <span class="q-num">📖</span> 說明與前提
+    </button>
+    <button class="nav-item" onclick="goScreen('prelim')" id="nav-prelim">
+      <span class="q-num">✦</span> 前提設定
+    </button>
+    <div style="height:6px;"></div>
+    <div class="nav-label">9 個評估項目</div>
+    <button class="nav-item" onclick="goScreen('q1')" id="nav-q1"><span class="q-num" id="qn1">1</span> Within vs Between</button>
+    <button class="nav-item" onclick="goScreen('q2')" id="nav-q2"><span class="q-num" id="qn2">2</span> Within 一致性</button>
+    <button class="nav-item" onclick="goScreen('q3')" id="nav-q3"><span class="q-num" id="qn3">3</span> Between 試驗數</button>
+    <button class="nav-item" onclick="goScreen('q4')" id="nav-q4"><span class="q-num" id="qn4">4</span> A priori 假說</button>
+    <button class="nav-item" onclick="goScreen('q5')" id="nav-q5"><span class="q-num" id="qn5">5</span> 交互作用 P 值</button>
+    <button class="nav-item" onclick="goScreen('q6')" id="nav-q6"><span class="q-num" id="qn6">6</span> 假說數量</button>
+    <button class="nav-item" onclick="goScreen('q7')" id="nav-q7"><span class="q-num" id="qn7">7</span> 隨機效應模型</button>
+    <button class="nav-item" onclick="goScreen('q8')" id="nav-q8"><span class="q-num" id="qn8">8</span> 連續變數切點</button>
+    <button class="nav-item" onclick="goScreen('q9')" id="nav-q9"><span class="q-num" id="qn9">9</span> 其他考量（選填）</button>
+    <div style="height:6px;"></div>
+    <button class="nav-item" onclick="goScreen('overall')" id="nav-overall">
+      <span class="q-num">★</span> 整體可信度
+    </button>
+    <div style="height:8px;"></div>
+    <div class="nav-label">操作</div>
+    <button class="nav-item" onclick="resetAll()"><span class="q-num">↺</span> 重新開始</button>
+    <button class="nav-item" onclick="exportReport()"><span class="q-num">⤓</span> 匯出報告</button>
+  </aside>
+
+  <!-- Main -->
+  <main>
+
+    <!-- ── Intro ── -->
+    <div class="screen active" id="screen-intro">
+      <div class="card">
+        <h2>ICEMAN 工具說明</h2>
+        <p>評估 Meta-analysis 中效果修飾因子分析（Subgroup Analysis / Meta-regression）之可信度</p>
+      </div>
+
+      <div class="card">
+        <h3>🎯 ICEMAN 的用途</h3>
+        <p style="margin-bottom:10px;">當 Meta-analysis 發現不一致性（Inconsistency），作者主張某個亞組效果修飾因子（Effect Modifier）可解釋此差異時，<b>ICEMAN</b> 提供標準化框架評估該主張的可信度。</p>
+        <div class="info-box info-blue">
+          <b>在 Core GRADE 3（不一致性）中的角色：</b><br>
+          若 Forest Plot 顯示研究間存在重要不一致性 → 尋找可信的 Subgroup 效應 → 使用 ICEMAN 評估可信度 → 決定是否拆分 PICO 或整體降級
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚠ 使用前必讀：三大重要規則</h3>
+        <div class="info-box info-red" style="margin-bottom:8px;">
+          <b>規則一：</b> 每個效果修飾因子（Effect Modifier）、每個結局（Outcome）、每個時間點、每個效果量指標，均須<b>分開填寫一份</b> ICEMAN 表格。
+        </div>
+        <div class="info-box info-yellow" style="margin-bottom:8px;">
+          <b>規則二：</b> 若交互作用 P 值 <b>&gt; 0.1</b>，<b>不應套用 ICEMAN</b>（統計支持太弱；ICEMAN 針對的是「可能存在效果修飾」的情境，而非「主張不存在效果修飾」）。
+        </div>
+        <div class="info-box info-blue">
+          <b>規則三：</b> 左側選項 = 降低可信度；右側選項 = 提升可信度。「完全不清楚」應視為「可能降低可信度」。每題務必附上說明理由（Comment）。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📊 整體可信度等級與臨床意涵</h3>
+        <table>
+          <tr><th>等級</th><th>臨床意涵</th><th>處理方式</th></tr>
+          <tr><td style="color:var(--red); font-weight:700;">Very Low<br>極低可信度</td><td>幾乎無支持效果修飾的證據</td><td>不拆分亞組；對全體族群使用整體效果；若有不一致性則對全體降級</td></tr>
+          <tr><td style="color:var(--orange); font-weight:700;">Low<br>低可信度</td><td>僅有少許不充分的支持</td><td>同上，但可在文字中簡述存在不確定性</td></tr>
+          <tr><td style="color:var(--yellow); font-weight:700;">Moderate<br>中度可信度</td><td>可能存在效果修飾</td><td>可同時呈現整體與亞組結果；為各亞組建立獨立 PICO 並分別評估確定性；坦承 close-call 性質</td></tr>
+          <tr><td style="color:var(--green); font-weight:700;">High<br>高可信度</td><td>很可能存在效果修飾</td><td>為各亞組建立獨立 PICO；分別呈現結果與確定性評分；分別做出臨床建議</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>📖 官方資源</h3>
+        <div class="info-box info-purple">
+          <b>ICEMAN 官方網站：</b> <a href="https://www.iceman.help" target="_blank" style="color:var(--accent);">www.iceman.help</a><br>
+          <b>原始文獻：</b> Schandelmaier S, et al. Development of the instrument to assess the credibility of effect modification analyses (ICEMAN) in randomized controlled trials and meta-analyses. <i>CMAJ</i> 2020;192:E901-6.
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goScreen('prelim')">開始評估：設定前提 →</button>
+      </div>
+    </div>
+
+    <!-- ── Prelim ── -->
+    <div class="screen" id="screen-prelim">
+      <div class="card">
+        <h2>前提設定（Essential Preliminary Considerations）</h2>
+        <p>定義本次評估的候選效果修飾因子，並確認基本前提。</p>
+      </div>
+
+      <div class="card">
+        <h3>🔧 填寫評估基本資訊</h3>
+        <div class="field-group">
+          <div class="field-row">
+            <label>候選效果修飾因子（Effect Modifier）</label>
+            <input type="text" id="f-modifier" placeholder="例：年齡（Age）、藥物劑量（Drug dose）、共病症（Comorbidity）" oninput="savePrelim()">
+          </div>
+          <div class="field-row">
+            <label>評估結局與時間點（Outcome & Time-point）</label>
+            <input type="text" id="f-outcome" placeholder="例：全因死亡率 1 年追蹤（Mortality at 1 year follow-up）" oninput="savePrelim()">
+          </div>
+          <div class="field-row">
+            <label>效果量指標（Effect Measure）</label>
+            <input type="text" id="f-measure" placeholder="例：相對風險（Relative Risk, RR）、風險差（Risk Difference）" oninput="savePrelim()">
+          </div>
+          <div class="field-row">
+            <label>效果修飾因子是否在隨機化前或隨機化時已測量？</label>
+            <div class="radio-inline">
+              <label><input type="radio" name="prelim-timing" value="yes" onchange="savePrelim()"> ✅ 是（繼續評估）</label>
+              <label><input type="radio" name="prelim-timing" value="no" onchange="savePrelim()">  ❌ 否（停止，請參閱 ICEMAN 手冊進一步說明）</label>
+            </div>
+          </div>
+        </div>
+        <div id="prelim-warning" style="display:none;" class="info-box info-red" style="margin-top:10px;">
+          ⚠ 效果修飾因子若在隨機化之後測量，會引入重大偏誤風險，ICEMAN 評估結果將不可靠。請參閱 ICEMAN 手冊（www.iceman.help）獲取進一步指引。
+        </div>
+        <div id="prelim-ok" style="display:none;" class="info-box info-green" style="margin-top:10px;">
+          ✅ 前提確認完成，可繼續進行 9 個評估項目。
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('intro')">← 說明</button>
+        <button class="btn btn-primary" id="btn-prelim-next" onclick="goScreen('q1')" disabled>開始評估項目 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q1 ── -->
+    <div class="screen" id="screen-q1">
+      <div class="card">
+        <h2>項目 1 / 9：Within vs. Between Trial 比較</h2>
+        <p>效果修飾分析是基於試驗內（Within）還是試驗間（Between）的比較？Within-trial 比較遠優於 Between-trial。</p>
+      </div>
+      <div class="info-box info-blue" style="margin-bottom:12px;">
+        <b>核心概念：</b> Between-trial 比較（比較不同試驗的整體效果）的混淆偏誤遠高於 Within-trial 比較（同一試驗內不同亞組的直接比較）。IPD（Individual Participant Data）分析且明確分離 within 與 between 資訊者最佳。
+      </div>
+      <div id="qcard-1"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('prelim')">← 上一步</button>
+        <button class="btn btn-primary" onclick="goScreen('q2')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q2 ── -->
+    <div class="screen" id="screen-q2">
+      <div class="card">
+        <h2>項目 2 / 9：Within-trial 效果修飾的一致性</h2>
+        <p>（若無或只有一個 Within-RCT 比較，請選 N/A）各個試驗間所觀察到的效果修飾方向與量級是否一致？</p>
+      </div>
+      <div class="info-box info-yellow" style="margin-bottom:12px;">
+        <b>注意：</b> 若效果修飾僅來自 Between-trial 比較（即 Q1 = Completely between），此題通常選 N/A。需有兩篇以上提供 within-trial subgroup 資訊的試驗才適用此題。
+      </div>
+      <div id="qcard-2"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q1')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q3')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q3 ── -->
+    <div class="screen" id="screen-q3">
+      <div class="card">
+        <h2>項目 3 / 9：Between-trial 比較的試驗數量</h2>
+        <p>（若無 Between-RCT 比較，請選 N/A）用於比較的試驗數量是否足夠？</p>
+      </div>
+      <div class="info-box info-blue" style="margin-bottom:12px;">
+        <b>數量閾值：</b><br>
+        • Subgroup analysis（最小亞組試驗數）：Very small ≤2 ｜ Rather small 3–4 ｜ Rather large 5–9 ｜ Large ≥10<br>
+        • Continuous meta-regression（試驗數）：Very small ≤5 ｜ Rather small 6–10 ｜ Rather large 11–15 ｜ Large &gt;15
+      </div>
+      <div id="qcard-3"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q2')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q4')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q4 ── -->
+    <div class="screen" id="screen-q4">
+      <div class="card">
+        <h2>項目 4 / 9：A priori 假說方向性</h2>
+        <p>效果修飾的方向是否事先（A priori）正確假設？</p>
+      </div>
+      <div class="info-box info-yellow" style="margin-bottom:12px;">
+        <b>關鍵：方向性（Directionality）</b><br>
+        假說不只要說「老年人與年輕人效果可能不同」，而需明確說「老年人中的效果會更大（或更小）」。Post-hoc 探索、無方向性預設、或結果與假說方向矛盾，均降低可信度。<br>
+        <b>最高可信度：</b> 有預先登錄的 protocol 且正確指定方向（含生物學合理性）。
+      </div>
+      <div id="qcard-4"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q3')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q5')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q5 ── -->
+    <div class="screen" id="screen-q5">
+      <div class="card">
+        <h2>項目 5 / 9：交互作用檢定 P 值</h2>
+        <p>交互作用檢定是否顯示偶然機率不足以解釋表觀效果修飾？（無論有多少個效果修飾因子均需考量）</p>
+      </div>
+      <div class="info-box info-blue" style="margin-bottom:12px;">
+        <b>P 值閾值（交互作用檢定 / Meta-regression）：</b><br>
+        &gt; 0.05 → 偶然很可能（降低可信度）<br>
+        ≤ 0.05 且 &gt; 0.01 → 偶然可能 ｜ ≤ 0.01 且 &gt; 0.005 → 偶然或許不能解釋 ｜ ≤ 0.005 → 偶然不太可能<br>
+        <b>注意：</b> P 值未報告且無法計算 → 選「可能是偶然」。多重檢定（多個假說）會使名目 P 值膨脹，需結合第 6 題一起判斷。
+      </div>
+      <div id="qcard-5"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q4')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q6')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q6 ── -->
+    <div class="screen" id="screen-q6">
+      <div class="card">
+        <h2>項目 6 / 9：效果修飾因子的假說數量</h2>
+        <p>作者是否只測試少數幾個效果修飾因子，或在統計分析中考量了假說數量（多重比較調整）？</p>
+      </div>
+      <div class="info-box info-yellow" style="margin-bottom:12px;">
+        <b>核心原則：</b> 測試 10 個以上假說時，即使 P = 0.006 也因多重比較而高度可疑（參見 Core GRADE 3 β 阻斷劑案例）。<br>
+        理想情境：有預先登錄的 protocol，且僅測試 ≤3 個效果修飾因子。
+      </div>
+      <div id="qcard-6"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q5')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q7')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q7 ── -->
+    <div class="screen" id="screen-q7">
+      <div class="card">
+        <h2>項目 7 / 9：隨機效應模型</h2>
+        <p>作者是否使用了隨機效應模型（Random Effects Model）？</p>
+      </div>
+      <div class="info-box info-blue" style="margin-bottom:12px;">
+        <b>為何重要：</b> 固定效應（Fixed/Common Effect）模型假設所有試驗估計相同的效果量，低估試驗間變異，可能過度精確地估計效果修飾。隨機效應模型允許試驗間異質性，對效果修飾的推論更保守且合理。
+      </div>
+      <div id="qcard-7"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q6')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q8')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q8 ── -->
+    <div class="screen" id="screen-q8">
+      <div class="card">
+        <h2>項目 8 / 9：連續變數的切點選擇</h2>
+        <p>（若效果修飾因子非連續變數，請選 N/A）若效果修飾因子為連續變數，是否避免了任意切點？</p>
+      </div>
+      <div class="info-box info-yellow" style="margin-bottom:12px;">
+        <b>最佳做法：</b> 使用全連續數值（線性或對數關係）進行 Meta-regression，不設切點。<br>
+        <b>可接受：</b> 使用預先設定的切點（如來自既有 RCT 或生物學依據）。<br>
+        <b>應避免：</b> 探索性切點（如選擇使交互作用 P 值最小的切點）— 這是最嚴重的 data dredging。
+      </div>
+      <div id="qcard-8"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q7')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('q9')">下一題 →</button>
+      </div>
+    </div>
+
+    <!-- ── Q9 ── -->
+    <div class="screen" id="screen-q9">
+      <div class="card">
+        <h2>項目 9 / 9（選填）：其他考量</h2>
+        <p>是否有其他任何可能增加或降低可信度的考量？（參閱 ICEMAN 手冊 Section 3.9）</p>
+      </div>
+      <div class="info-box info-blue" style="margin-bottom:12px;">
+        <b>可能的其他考量範例：</b><br>
+        • 生物學合理性的強度（強烈的機制支持 → 提升；缺乏機制 → 降低）<br>
+        • 動物實驗或基礎研究的支持<br>
+        • 效果修飾因子本身的測量誤差<br>
+        • 其他相關情境因素<br>
+        若無額外考量，選擇 N/A 即可。
+      </div>
+      <div id="qcard-9"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q8')">← 上一題</button>
+        <button class="btn btn-primary" onclick="goScreen('overall')">產生整體評分 →</button>
+      </div>
+    </div>
+
+    <!-- ── Overall ── -->
+    <div class="screen" id="screen-overall">
+      <div class="card">
+        <h2>★ 整體可信度評分</h2>
+        <p>綜合以上 9 個項目，評估此效果修飾分析的整體可信度。<b>整體評分應由降低可信度的項目所主導。</b></p>
+      </div>
+
+      <div class="card">
+        <h3>🔍 自動評分建議（依 ICEMAN 決策規則）</h3>
+        <div id="auto-suggest"></div>
+        <div class="decision-table">
+          <div class="decision-row">
+            <span class="arrow" style="color:var(--red);">⬇⬇</span>
+            <span class="cond">所有項目均選「Definitely / Probably 降低」或「不清楚」</span>
+            <span class="result" style="color:var(--red);">Very Low</span>
+          </div>
+          <div class="decision-row">
+            <span class="arrow" style="color:var(--red);">⬇</span>
+            <span class="cond">兩個以上項目選「Definitely 降低」</span>
+            <span class="result" style="color:var(--orange);">最高通常 Low</span>
+          </div>
+          <div class="decision-row">
+            <span class="arrow" style="color:var(--orange);">⬇</span>
+            <span class="cond">一個項目選「Definitely 降低」</span>
+            <span class="result" style="color:var(--yellow);">最高通常 Moderate</span>
+          </div>
+          <div class="decision-row">
+            <span class="arrow" style="color:var(--orange);">⬇</span>
+            <span class="cond">兩個項目選「Probably 降低」</span>
+            <span class="result" style="color:var(--yellow);">最高通常 Moderate</span>
+          </div>
+          <div class="decision-row">
+            <span class="arrow" style="color:var(--green);">✅</span>
+            <span class="cond">無任何項目選「Definitely 或 Probably 降低」</span>
+            <span class="result" style="color:var(--green);">High 很可能</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📊 各項目評分摘要</h3>
+        <div id="q-summary"></div>
+      </div>
+
+      <div class="card">
+        <h3>★ 選擇整體可信度等級</h3>
+        <div class="cred-scale">
+          <div class="cred-opt" id="cred-vlow" onclick="selectOverall('vlow')">
+            <div class="cred-icon">🔴</div>
+            <div class="cred-name">Very Low</div>
+            <div class="cred-name-zh">極低可信度</div>
+            <div class="cred-desc">幾乎無支持；對全體族群使用整體效果</div>
+          </div>
+          <div class="cred-opt" id="cred-low" onclick="selectOverall('low')">
+            <div class="cred-icon">🟠</div>
+            <div class="cred-name">Low</div>
+            <div class="cred-name-zh">低可信度</div>
+            <div class="cred-desc">少許不充分支持；使用整體效果並說明不確定性</div>
+          </div>
+          <div class="cred-opt" id="cred-mod" onclick="selectOverall('mod')">
+            <div class="cred-icon">🟡</div>
+            <div class="cred-name">Moderate</div>
+            <div class="cred-name-zh">中度可信度</div>
+            <div class="cred-desc">可能存在效果修飾；可呈現亞組結果但說明不確定性</div>
+          </div>
+          <div class="cred-opt" id="cred-high" onclick="selectOverall('high')">
+            <div class="cred-icon">🟢</div>
+            <div class="cred-name">High</div>
+            <div class="cred-name-zh">高可信度</div>
+            <div class="cred-desc">很可能存在效果修飾；為各亞組建立獨立 PICO</div>
+          </div>
+        </div>
+        <div class="comment-wrap" style="margin-top:14px;">
+          <label>整體評分理由說明（Overall Comment）</label>
+          <textarea id="overall-comment" rows="3" placeholder="請說明整體評分的判斷依據，特別是主導最終等級的降低可信度因子…" oninput="saveOverall()"></textarea>
+        </div>
+        <div id="overall-result" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goScreen('q9')">← 返回修改</button>
+        <button class="btn btn-success" onclick="exportReport()">⤓ 匯出評估報告</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  本教學工具設計作者：<b>土城醫院 鄭湜玄 臨床藥師</b>
+  &nbsp;｜&nbsp;
+  依據 Schandelmaier et al., ICEMAN v1.1, <i>CMAJ</i> 2020 製作
+  &nbsp;｜&nbsp;
+  僅供教育訓練使用
+</footer>
+
+<script>
+// ═══════════════════════════════════════
+// Question definitions
+// ═══════════════════════════════════════
+const QUESTIONS = [
+  {
+    id: 1,
+    en: 'Is the analysis of effect modification based on comparison within rather than between trials?',
+    zh: '效果修飾分析是基於試驗內（Within）而非試驗間（Between）的比較嗎？',
+    hasNA: false,
+    opts: [
+      { label: 'Completely\nbetween', labelZh: '完全 Between', desc: '僅比較各試驗整體效果（Aggregate data meta-analysis 的典型情況）', side: 'left' },
+      { label: 'Mostly between\nor unclear', labelZh: '主要 Between 或不清楚', desc: '多數資訊來自整體效果，少數試驗有提供 Within-trial 亞組資訊', side: 'left' },
+      { label: 'Mostly\nwithin', labelZh: '主要 Within', desc: '多數試驗提供 Within-trial 亞組資訊；或 IPD 分析混合 within 與 between', side: 'right' },
+      { label: 'Completely\nwithin', labelZh: '完全 Within', desc: '所有試驗提供 Within-trial 亞組資訊，且分析明確分離 within 與 between（如 meta-analysis of interactions）', side: 'right' },
+    ]
+  },
+  {
+    id: 2,
+    en: 'For within-trial comparisons, is the effect modification similar from trial to trial?',
+    zh: '在 Within-trial 比較中，各試驗間觀察到的效果修飾是否相似？',
+    hasNA: true, naLabel: '不適用：無或僅有一個 Within-RCT 比較',
+    opts: [
+      { label: 'Definitely\nnot similar', labelZh: '明確不相似', desc: '有兩篇以上試驗報告效果修飾，且方向明顯不同', side: 'left' },
+      { label: 'Probably not\nor unclear', labelZh: '可能不相似或不清楚', desc: '個別試驗未報告效果修飾，或估計太不精確而無法判斷', side: 'left' },
+      { label: 'Mostly\nsimilar', labelZh: '大致相似', desc: '有兩篇以上試驗報告效果修飾，方向大致一致，但量級差異相當大', side: 'right' },
+      { label: 'Definitely\nsimilar', labelZh: '明確相似', desc: '有兩篇以上試驗報告效果修飾，方向一致，量級差異不大', side: 'right' },
+    ]
+  },
+  {
+    id: 3,
+    en: 'For between-trial comparisons, is the number of trials large?',
+    zh: '在 Between-trial 比較中，納入的試驗數量是否足夠多？',
+    hasNA: true, naLabel: '不適用：無 Between-RCT 比較',
+    opts: [
+      { label: 'Very\nsmall', labelZh: '非常少', desc: 'Subgroup：最小亞組 ≤2 篇；Meta-regression：≤5 篇', side: 'left' },
+      { label: 'Rather small\nor unclear', labelZh: '偏少或不清楚', desc: 'Subgroup：最小亞組 3–4 篇；Meta-regression：6–10 篇', side: 'left' },
+      { label: 'Rather\nlarge', labelZh: '偏多', desc: 'Subgroup：最小亞組 5–9 篇；Meta-regression：11–15 篇', side: 'right' },
+      { label: 'Large', labelZh: '充足', desc: 'Subgroup：最小亞組 ≥10 篇；Meta-regression：>15 篇', side: 'right' },
+    ]
+  },
+  {
+    id: 4,
+    en: 'Was the direction of effect modification correctly hypothesized a priori?',
+    zh: '效果修飾的方向是否在事前（A priori）被正確假設？',
+    hasNA: false,
+    opts: [
+      { label: 'Definitely\nno', labelZh: '明確否', desc: '明顯事後（Post-hoc）分析；或結果與假說方向不符；或生物學上極不合理', side: 'left' },
+      { label: 'Probably no\nor unclear', labelZh: '可能否或不清楚', desc: '假說模糊，或方向不明確', side: 'left' },
+      { label: 'Probably\nyes', labelZh: '可能是', desc: '無預先登錄 Protocol，但有明確的 A priori 假說聲明且方向正確', side: 'right' },
+      { label: 'Definitely\nyes', labelZh: '明確是', desc: '有預先登錄的 Protocol，且正確指定方向（含生物學合理性依據）', side: 'right' },
+    ]
+  },
+  {
+    id: 5,
+    en: 'Does a test for interaction suggest that chance is an unlikely explanation?',
+    zh: '交互作用檢定是否顯示偶然機率不足以解釋表觀效果修飾？',
+    hasNA: false,
+    opts: [
+      { label: 'Chance very\nlikely', labelZh: '偶然非常可能', desc: '交互作用或 Meta-regression P 值 > 0.05', side: 'left' },
+      { label: 'Chance likely\nor unclear', labelZh: '偶然可能或不清楚', desc: 'P 值 ≤0.05 且 >0.01；或未報告交互作用檢定且無法計算', side: 'left' },
+      { label: 'Chance may\nnot explain', labelZh: '偶然或許不能解釋', desc: 'P 值 ≤0.01 且 >0.005', side: 'right' },
+      { label: 'Chance\nunlikely', labelZh: '偶然不太可能', desc: 'P 值 ≤0.005', side: 'right' },
+    ]
+  },
+  {
+    id: 6,
+    en: 'Did the authors test only a small number of effect modifiers or consider multiplicity?',
+    zh: '作者是否只測試少數幾個效果修飾因子，或在分析中考量了多重比較問題？',
+    hasNA: false,
+    opts: [
+      { label: 'Definitely\nno', labelZh: '明確否', desc: '明確標示為探索性分析；或測試超過 10 個假說且未考量多重比較', side: 'left' },
+      { label: 'Probably no\nor unclear', labelZh: '可能否或不清楚', desc: '未提及假說數量；或測試 4–10 個假說且未考量多重比較', side: 'left' },
+      { label: 'Probably\nyes', labelZh: '可能是', desc: '無 Protocol 但明確聲明測試 ≤3 個效果修飾因子', side: 'right' },
+      { label: 'Definitely\nyes', labelZh: '明確是', desc: '有 Protocol 且測試 ≤3 個效果修飾因子；或在分析中已考量多重比較（如 Bonferroni 校正）', side: 'right' },
+    ]
+  },
+  {
+    id: 7,
+    en: 'Did the authors use a random effects model?',
+    zh: '作者是否使用了隨機效應模型（Random Effects Model）？',
+    hasNA: false,
+    opts: [
+      { label: 'Definitely\nno', labelZh: '明確否', desc: '明確使用固定效應（Fixed / Common Effect）模型', side: 'left' },
+      { label: 'Probably\nno or unclear', labelZh: '可能否或不清楚', desc: '可能使用固定效應模型（如方法描述模糊）', side: 'left' },
+      { label: 'Probably\nyes', labelZh: '可能是', desc: '可能使用隨機或混合效應模型', side: 'right' },
+      { label: 'Definitely\nyes', labelZh: '明確是', desc: '明確使用隨機效應（Random / Mixed Effects）模型', side: 'right' },
+    ]
+  },
+  {
+    id: 8,
+    en: 'If continuous, were arbitrary cut points avoided?',
+    zh: '若效果修飾因子為連續變數，是否避免了任意切點的使用？',
+    hasNA: true, naLabel: '不適用：效果修飾因子非連續變數',
+    opts: [
+      { label: 'Definitely\nno', labelZh: '明確否', desc: '使用探索性切點（如選擇使交互作用 P 值最大的切點）', side: 'left' },
+      { label: 'Probably no\nor unclear', labelZh: '可能否或不清楚', desc: '使用來源不明的切點', side: 'left' },
+      { label: 'Probably\nyes', labelZh: '可能是', desc: '使用預先設定的切點（如來自既有 RCT 或指引建議）', side: 'right' },
+      { label: 'Definitely\nyes', labelZh: '明確是', desc: '使用全連續數值分析（假設線性或對數關係），不設任意切點', side: 'right' },
+    ]
+  },
+  {
+    id: 9,
+    en: 'Are there additional considerations that may increase or decrease credibility?',
+    zh: '是否有其他可能影響可信度的考量？',
+    hasNA: true, naLabel: '不適用：無其他考量',
+    opts: [
+      { label: 'Yes, probably\ndecrease', labelZh: '有，可能降低', desc: '存在其他降低可信度的因素（請在 Comment 說明）', side: 'left' },
+      { label: '—', labelZh: '（此題無中立選項）', desc: '', side: 'neutral', hidden: true },
+      { label: '—', labelZh: '', desc: '', side: 'neutral', hidden: true },
+      { label: 'Yes, probably\nincrease', labelZh: '有，可能提升', desc: '存在其他提升可信度的因素（請在 Comment 說明）', side: 'right' },
+    ],
+    twoOpt: true  // special: only 2 real options
+  },
+];
+
+// ═══════════════════════════════════════
+// State
+// ═══════════════════════════════════════
+let state = {
+  prelim: { modifier: '', outcome: '', measure: '', timing: '' },
+  answers: {}, // q1..q9: { optIdx, isNA, comment }
+  overall: { level: null, comment: '' }
+};
+
+const screens = ['intro','prelim','q1','q2','q3','q4','q5','q6','q7','q8','q9','overall'];
+
+// ═══════════════════════════════════════
+// Navigation
+// ═══════════════════════════════════════
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+  if(id === 'overall') buildOverall();
+  updateProgress();
+}
+
+// ═══════════════════════════════════════
+// Prelim
+// ═══════════════════════════════════════
+function savePrelim() {
+  state.prelim.modifier = document.getElementById('f-modifier').value;
+  state.prelim.outcome  = document.getElementById('f-outcome').value;
+  state.prelim.measure  = document.getElementById('f-measure').value;
+  const timing = document.querySelector('input[name="prelim-timing"]:checked');
+  state.prelim.timing = timing ? timing.value : '';
+
+  const warn = document.getElementById('prelim-warning');
+  const ok   = document.getElementById('prelim-ok');
+  const btn  = document.getElementById('btn-prelim-next');
+  warn.style.display = state.prelim.timing === 'no' ? '' : 'none';
+  ok.style.display   = state.prelim.timing === 'yes' ? '' : 'none';
+  btn.disabled       = state.prelim.timing !== 'yes';
+}
+
+// ═══════════════════════════════════════
+// Question cards
+// ═══════════════════════════════════════
+function renderAllQCards() {
+  QUESTIONS.forEach(q => {
+    const el = document.getElementById('qcard-'+q.id);
+    if(el) el.innerHTML = buildQCard(q);
+  });
+}
+
+function buildQCard(q) {
+  const ans = state.answers[q.id] || {};
+  const isNA = ans.isNA || false;
+
+  // Q9 special: only 2 real opts
+  let optsToRender = q.opts;
+  if(q.twoOpt) optsToRender = [q.opts[0], q.opts[3]]; // decrease, increase
+
+  const naHtml = q.hasNA ? `
+    <label class="na-toggle ${isNA?'checked':''}" id="na-toggle-${q.id}" onclick="toggleNA(${q.id})">
+      <input type="checkbox" ${isNA?'checked':''} onchange="" style="pointer-events:none;">
+      N/A：${q.naLabel}
+    </label>` : '';
+
+  const optsHtml = optsToRender.map((opt, i) => {
+    if(opt.hidden) return '';
+    const realIdx = q.twoOpt ? (i===0 ? 0 : 3) : i;
+    const sel = !isNA && ans.optIdx === realIdx;
+    const sideClass = sel ? (opt.side==='left' ? 'selected-left' : 'selected-right') : '';
+    const numClass  = `sel-${realIdx+1}`;
+    return `
+      <div class="scale-opt ${sideClass} ${numClass}" onclick="selectOpt(${q.id}, ${realIdx})">
+        <div class="opt-label">${opt.label.replace('\n','<br>')}</div>
+        <div style="font-size:11px; color:var(--accent2); margin-bottom:3px;">${opt.labelZh}</div>
+        <div class="opt-desc">${opt.desc}</div>
+      </div>`;
+  }).join('');
+
+  const gridClass = q.twoOpt ? 'scale-grid' : 'scale-grid';
+  const gridStyle = q.twoOpt ? 'grid-template-columns: 1fr 1fr;' : '';
+
+  return `
+    ${naHtml}
+    <div class="dir-bar">
+      <span style="color:var(--left-col); font-size:11px; font-weight:700;">⬅ 降低可信度</span>
+      <div class="dir-arrow dir-left"></div>
+      <div class="dir-arrow dir-right"></div>
+      <span style="color:var(--right-col); font-size:11px; font-weight:700;">提升可信度 ➡</span>
+    </div>
+    <div class="${gridClass}" style="${gridStyle} ${isNA?'opacity:.4;pointer-events:none;':''}">
+      ${optsHtml}
+    </div>
+    <div class="comment-wrap">
+      <label>Comment（請說明此項評分的依據）</label>
+      <textarea id="comment-${q.id}" rows="2" placeholder="透明度要求：請在此說明評分理由…" oninput="saveComment(${q.id})">${ans.comment||''}</textarea>
+    </div>
+    ${ans.optIdx !== undefined || isNA ? `
+      <div class="info-box info-green" style="margin-top:8px; font-size:12px;">
+        ✅ 已記錄：${isNA ? 'N/A' : q.twoOpt ? (ans.optIdx===0?'可能降低可信度':'可能提升可信度') : q.opts[ans.optIdx]?.labelZh || ''}
+      </div>` : ''}
+  `;
+}
+
+function selectOpt(qId, optIdx) {
+  if(!state.answers[qId]) state.answers[qId] = {};
+  state.answers[qId].optIdx = optIdx;
+  state.answers[qId].isNA = false;
+  const q = QUESTIONS.find(q => q.id === qId);
+  const el = document.getElementById('qcard-'+qId);
+  if(el) el.innerHTML = buildQCard(q);
+  // restore comment
+  const ta = document.getElementById('comment-'+qId);
+  if(ta && state.answers[qId].comment) ta.value = state.answers[qId].comment;
+  updateProgress();
+  updateSideNav();
+}
+
+function toggleNA(qId) {
+  if(!state.answers[qId]) state.answers[qId] = {};
+  state.answers[qId].isNA = !state.answers[qId].isNA;
+  if(state.answers[qId].isNA) delete state.answers[qId].optIdx;
+  const q = QUESTIONS.find(q => q.id === qId);
+  const el = document.getElementById('qcard-'+qId);
+  if(el) el.innerHTML = buildQCard(q);
+  const ta = document.getElementById('comment-'+qId);
+  if(ta && state.answers[qId].comment) ta.value = state.answers[qId].comment;
+  updateProgress();
+  updateSideNav();
+}
+
+function saveComment(qId) {
+  if(!state.answers[qId]) state.answers[qId] = {};
+  const ta = document.getElementById('comment-'+qId);
+  if(ta) state.answers[qId].comment = ta.value;
+}
+
+// ═══════════════════════════════════════
+// Overall
+// ═══════════════════════════════════════
+function buildOverall() {
+  // Auto suggest
+  const suggest = autoSuggest();
+  document.getElementById('auto-suggest').innerHTML = suggest.html;
+
+  // Q summary
+  const summaryEl = document.getElementById('q-summary');
+  summaryEl.innerHTML = QUESTIONS.map(q => {
+    const ans = state.answers[q.id] || {};
+    let valLabel = '—（未評分）';
+    let valColor = 'var(--muted)';
+    if(ans.isNA) { valLabel = 'N/A'; valColor = 'var(--muted)'; }
+    else if(ans.optIdx !== undefined) {
+      const opt = q.opts[ans.optIdx];
+      valLabel = opt.labelZh;
+      valColor = ans.optIdx <= 1 ? 'var(--left-col)' : 'var(--right-col)';
+    }
+    return `
+      <div style="display:flex; align-items:flex-start; gap:10px; padding:8px 10px; border-bottom:1px solid var(--border); font-size:12px;">
+        <span style="color:var(--accent2); font-weight:700; width:20px; flex-shrink:0;">Q${q.id}</span>
+        <span style="flex:1; color:var(--muted);">${q.zh}</span>
+        <span style="font-weight:700; color:${valColor}; white-space:nowrap;">${valLabel}</span>
+      </div>`;
+  }).join('');
+
+  // restore selection
+  if(state.overall.level) {
+    document.querySelectorAll('.cred-opt').forEach(el => el.className = 'cred-opt');
+    const sel = document.getElementById('cred-'+state.overall.level);
+    if(sel) sel.classList.add('sel-'+state.overall.level);
+    showOverallResult(state.overall.level);
+  }
+  const ta = document.getElementById('overall-comment');
+  if(ta) ta.value = state.overall.comment || '';
+}
+
+function autoSuggest() {
+  let definitelyDecrease = 0, probablyDecrease = 0, allBadOrUnclear = true;
+  QUESTIONS.forEach(q => {
+    const ans = state.answers[q.id] || {};
+    if(ans.isNA) { allBadOrUnclear = false; return; }
+    if(ans.optIdx === undefined) return;
+    if(ans.optIdx === 0) { definitelyDecrease++; probablyDecrease++; }
+    else if(ans.optIdx === 1) { probablyDecrease++; }
+    else { allBadOrUnclear = false; }
+  });
+
+  const rated = Object.keys(state.answers).length;
+  if(rated < 8) {
+    return { html: `<div class="info-box info-yellow">尚有 ${9-rated} 個項目未完成評分，自動建議評分可能不準確。</div>`, level: null };
+  }
+
+  let suggestedLevel, reason;
+  if(allBadOrUnclear && rated >= 8) {
+    suggestedLevel = 'vlow'; reason = '所有已評分項目均顯示降低可信度或不清楚 → 建議 Very Low';
+  } else if(definitelyDecrease >= 2) {
+    suggestedLevel = 'low'; reason = `${definitelyDecrease} 個項目選 "Definitely 降低" → 最高通常 Low`;
+  } else if(definitelyDecrease === 1 || probablyDecrease >= 2) {
+    suggestedLevel = 'mod'; reason = `${definitelyDecrease} 個 Definitely 降低 + ${probablyDecrease-definitelyDecrease} 個 Probably 降低 → 最高通常 Moderate`;
+  } else {
+    suggestedLevel = 'high'; reason = '無項目選 Definitely 或 Probably 降低 → High 很可能';
+  }
+
+  const colorMap = { vlow: 'var(--red)', low: 'var(--orange)', mod: 'var(--yellow)', high: 'var(--green)' };
+  const nameMap  = { vlow: 'Very Low', low: 'Low', mod: 'Moderate', high: 'High' };
+
+  return {
+    html: `<div class="info-box info-purple">
+      <b>自動建議：</b> <span style="color:${colorMap[suggestedLevel]}; font-weight:800;">${nameMap[suggestedLevel]}</span><br>
+      <small>${reason}</small><br>
+      <small style="color:var(--muted);">注意：自動建議僅供參考，最終評分需由評估者根據整體判斷決定。</small>
+    </div>`,
+    level: suggestedLevel
+  };
+}
+
+function selectOverall(level) {
+  document.querySelectorAll('.cred-opt').forEach(el => el.className = 'cred-opt');
+  document.getElementById('cred-'+level).classList.add('sel-'+level);
+  state.overall.level = level;
+  showOverallResult(level);
+}
+
+function showOverallResult(level) {
+  const map = {
+    vlow: { cls: 'badge-vlow', icon: '🔴', name: 'Very Low 極低可信度', action: '不拆分亞組；對全體族群使用整體效果估計；若有不一致性則對整體降低確定性' },
+    low:  { cls: 'badge-low',  icon: '🟠', name: 'Low 低可信度',       action: '使用整體效果並在文字中說明仍存在不確定性' },
+    mod:  { cls: 'badge-mod',  icon: '🟡', name: 'Moderate 中度可信度', action: '考慮同時呈現整體與亞組結果；為各亞組建立獨立 PICO 並分別評估確定性；坦承 close-call 性質' },
+    high: { cls: 'badge-high', icon: '🟢', name: 'High 高可信度',      action: '為各亞組建立獨立 PICO；分別呈現結果與確定性；分別做出臨床建議' },
+  };
+  const m = map[level];
+  document.getElementById('overall-result').innerHTML = `
+    <div class="info-box info-green">
+      <b>整體評分：</b> <span class="result-badge ${m.cls}">${m.icon} ${m.name}</span><br>
+      <b style="display:block;margin-top:8px;">臨床處理方式：</b>${m.action}
+    </div>`;
+}
+
+function saveOverall() {
+  const ta = document.getElementById('overall-comment');
+  if(ta) state.overall.comment = ta.value;
+}
+
+// ═══════════════════════════════════════
+// Progress
+// ═══════════════════════════════════════
+function updateProgress() {
+  const total = 9;
+  let done = 0;
+  QUESTIONS.forEach(q => {
+    const ans = state.answers[q.id];
+    if(ans && (ans.isNA || ans.optIdx !== undefined)) done++;
+  });
+  document.getElementById('progressLabel').textContent = `${done} / ${total} 已完成`;
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = '';
+  for(let i=0; i<total; i++) {
+    const d = document.createElement('div');
+    const ans = state.answers[i+1];
+    const isDone = ans && (ans.isNA || ans.optIdx !== undefined);
+    d.className = 'p-dot' + (isDone ? ' done' : '');
+    bar.appendChild(d);
+  }
+}
+
+function updateSideNav() {
+  QUESTIONS.forEach(q => {
+    const ans = state.answers[q.id];
+    const isDone = ans && (ans.isNA || ans.optIdx !== undefined);
+    const nav = document.getElementById('nav-q'+q.id);
+    const qn  = document.getElementById('qn'+q.id);
+    if(nav && isDone) {
+      nav.classList.add('done');
+      if(qn) qn.textContent = '✓';
+    } else if(nav) {
+      nav.classList.remove('done');
+      if(qn) qn.textContent = q.id;
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+// Reset
+// ═══════════════════════════════════════
+function resetAll() {
+  if(!confirm('確定要清除所有評分資料並重新開始？')) return;
+  state = { prelim: {modifier:'',outcome:'',measure:'',timing:''}, answers: {}, overall: {level:null, comment:''} };
+  document.getElementById('f-modifier').value = '';
+  document.getElementById('f-outcome').value  = '';
+  document.getElementById('f-measure').value  = '';
+  document.querySelectorAll('input[name="prelim-timing"]').forEach(r => r.checked = false);
+  document.getElementById('prelim-warning').style.display = 'none';
+  document.getElementById('prelim-ok').style.display = 'none';
+  document.getElementById('btn-prelim-next').disabled = true;
+  renderAllQCards();
+  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('done'); });
+  QUESTIONS.forEach(q => { const qn = document.getElementById('qn'+q.id); if(qn) qn.textContent = q.id; });
+  updateProgress();
+  goScreen('intro');
+}
+
+// ═══════════════════════════════════════
+// Export
+// ═══════════════════════════════════════
+function exportReport() {
+  const SEP = '='.repeat(50);
+  const now = new Date();
+  const date = now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+  const lines = [];
+  lines.push('ICEMAN 效果修飾分析可信度評估報告');
+  lines.push(SEP);
+  lines.push('匯出日期：'+date);
+  lines.push('');
+  lines.push('【前提設定】');
+  lines.push('  候選效果修飾因子：'+(state.prelim.modifier||'未填寫'));
+  lines.push('  評估結局與時間點：'+(state.prelim.outcome||'未填寫'));
+  lines.push('  效果量指標：'+(state.prelim.measure||'未填寫'));
+  lines.push('  隨機化前/時已測量：'+(state.prelim.timing==='yes'?'是':'否/未選'));
+  lines.push('');
+  lines.push(SEP);
+  lines.push('【各項目評分】');
+  lines.push('');
+  QUESTIONS.forEach(q => {
+    const ans = state.answers[q.id] || {};
+    lines.push(`Q${q.id}：${q.zh}`);
+    if(ans.isNA) {
+      lines.push('  評分：N/A');
+    } else if(ans.optIdx !== undefined) {
+      const opt = q.opts[ans.optIdx];
+      const side = ans.optIdx <= 1 ? '⬇ 降低可信度' : '⬆ 提升可信度';
+      lines.push(`  評分：${opt.labelZh}（${opt.label.replace('\n',' ')}）`);
+      lines.push(`  方向：${side}`);
+    } else {
+      lines.push('  評分：未完成');
+    }
+    if(ans.comment) lines.push('  Comment：'+ans.comment);
+    lines.push('');
+  });
+  lines.push(SEP);
+  const levelMap = { vlow:'Very Low 極低可信度', low:'Low 低可信度', mod:'Moderate 中度可信度', high:'High 高可信度' };
+  lines.push('【整體可信度評分】');
+  lines.push('  等級：'+(state.overall.level ? levelMap[state.overall.level] : '未評分'));
+  if(state.overall.comment) lines.push('  說明：'+state.overall.comment);
+  lines.push('');
+  lines.push(SEP);
+  lines.push('本報告依據 ICEMAN v1.1（Schandelmaier et al., CMAJ 2020）製作');
+  lines.push('工具設計：土城醫院 鄭湜玄 臨床藥師');
+
+  const content = lines.join('\r\n');
+  try {
+    const a = document.createElement('a');
+    a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    a.download = 'ICEMAN_評估報告_'+date.replace(/\//g,'-')+'.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  } catch(e) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `<div style="background:#1a1d27;border:1px solid #2e3352;border-radius:12px;max-width:600px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+      <div style="padding:14px 18px;border-bottom:1px solid #2e3352;display:flex;justify-content:space-between;">
+        <span style="font-weight:700;">ICEMAN 評估報告</span>
+        <button onclick="this.closest('[style]').remove()" style="background:#e74c3c;border:none;color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;">✕</button>
+      </div>
+      <textarea readonly style="flex:1;background:#0f1117;color:#e8eaf0;border:none;padding:14px;font-family:monospace;font-size:12px;" onclick="this.select()">${content}</textarea>
+    </div>`;
+    document.body.appendChild(modal);
+    setTimeout(()=>{ const ta=modal.querySelector('textarea'); if(ta)ta.select(); },100);
+  }
+}
+
+// ═══════════════════════════════════════
+// Init
+// ═══════════════════════════════════════
+renderAllQCards();
+updateProgress();
+</script>
+</body>
+</html>
