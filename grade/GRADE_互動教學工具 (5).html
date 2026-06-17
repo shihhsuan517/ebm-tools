@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Core GRADE 互動評分教學工具</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #22263a;
+    --border: #2e3352;
+    --accent: #5b8dee;
+    --accent2: #7c5cbf;
+    --green: #2ecc71;
+    --yellow: #f39c12;
+    --orange: #e67e22;
+    --red: #e74c3c;
+    --text: #e8eaf0;
+    --muted: #8891b4;
+    --tag-bg: #2a2f45;
+    --high-col: #1a4a2e;
+    --mod-col: #2a3a1a;
+    --low-col: #3a2e10;
+    --vlow-col: #3a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1a2040 0%, #0f1117 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: .5px; color: var(--text); }
+  header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .progress-bar { display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; }
+  .step-dot {
+    height: 6px; flex: 1; min-width: 20px; border-radius: 3px;
+    background: var(--border); transition: background .3s;
+  }
+  .step-dot.done { background: var(--green); }
+  .step-dot.active { background: var(--accent); }
+  /* ── Layout ── */
+  .app { display: flex; height: calc(100vh - 88px - 37px); overflow: hidden; }
+  /* ── Sidebar ── */
+  aside {
+    width: 260px; min-width: 200px; background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 16px 12px;
+    flex-shrink: 0;
+  }
+  .nav-section { margin-bottom: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; padding-left: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px;
+    cursor: pointer; transition: background .15s;
+    font-size: 13px; color: var(--muted); border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { background: var(--card); color: var(--accent); font-weight: 600; }
+  .nav-item.done .step-icon::after { content: '✓'; }
+  .step-icon { font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--border); flex-shrink: 0; }
+  .nav-item.active .step-icon { background: var(--accent); color: #fff; }
+  .nav-item.done .step-icon { background: var(--green); color: #fff; font-size: 12px; }
+  /* ── Cert badge ── */
+  .cert-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    border: 1px solid; margin: 2px;
+  }
+  .cert-high { background: var(--high-col); color: #4cd98c; border-color: #2ecc71; }
+  .cert-mod  { background: var(--mod-col);  color: #a8d060; border-color: #7ab648; }
+  .cert-low  { background: var(--low-col);  color: #f4c060; border-color: #e6a020; }
+  .cert-vlow { background: var(--vlow-col); color: #f07070; border-color: #e74c3c; }
+  /* ── Main content ── */
+  main { flex: 1; overflow-y: auto; padding: 24px; }
+  .screen { display: none; max-width: 820px; margin: 0 auto; }
+  .screen.active { display: block; }
+  /* ── Cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+  .card h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--accent); }
+  .card p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+  /* ── Info box ── */
+  .info-box {
+    border-radius: 8px; padding: 12px 14px; margin: 10px 0;
+    border-left: 3px solid; font-size: 13px; line-height: 1.6;
+  }
+  .info-blue  { background: #1a2240; border-color: var(--accent); }
+  .info-green { background: #12261c; border-color: var(--green); }
+  .info-yellow{ background: #261f0e; border-color: var(--yellow); }
+  .info-red   { background: #2a1010; border-color: var(--red); }
+  /* ── Decision tree ── */
+  .tree-node {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 8px;
+    cursor: pointer; transition: all .2s;
+  }
+  .tree-node:hover { border-color: var(--accent); }
+  .tree-node.selected { border-color: var(--accent); background: #1e2540; }
+  .tree-node input[type="radio"] { display: none; }
+  .tree-node label { cursor: pointer; display: block; }
+  .tree-node .q-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .tree-node .q-detail { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  /* ── Score display ── */
+  .score-track {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;
+  }
+  .score-track .label { font-size: 12px; color: var(--muted); flex: 1; }
+  .score-chips { display: flex; gap: 4px; }
+  .chip {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .chip.full { background: #5b8dee; color: #fff; }
+  .chip.empty { background: var(--border); color: var(--muted); }
+  .chip.minus { background: var(--red); color: #fff; }
+  .chip.plus  { background: var(--green); color: #fff; }
+  /* ── Domain rows ── */
+  .domain-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: background .15s;
+  }
+  .domain-row:hover { background: var(--card); }
+  .domain-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .domain-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--tag-bg); color: var(--muted); }
+  .domain-tag.active { background: #1e2a50; color: var(--accent); }
+  .domain-tag.warn   { background: #2e1c0a; color: var(--orange); }
+  .domain-tag.danger { background: #2a0f0f; color: var(--red); }
+  .domain-tag.boost  { background: #0f2a1a; color: var(--green); }
+  /* ── Dropdown select ── */
+  select {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px;
+    outline: none; cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+  /* ── Buttons ── */
+  .btn {
+    padding: 9px 20px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4a7de0; }
+  .btn-ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-danger  { background: var(--red); color: #fff; }
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  /* ── Final result ── */
+  .final-cert {
+    text-align: center; padding: 28px;
+    border-radius: 16px; margin-bottom: 20px;
+    border: 2px solid;
+  }
+  .final-cert .cert-level { font-size: 32px; font-weight: 900; letter-spacing: 1px; }
+  .final-cert .cert-sub   { font-size: 14px; margin-top: 4px; }
+  .final-cert .cert-desc  { font-size: 13px; margin-top: 10px; color: var(--muted); }
+  .final-high { background: var(--high-col); border-color: var(--green); }
+  .final-high .cert-level { color: #4cd98c; }
+  .final-mod  { background: var(--mod-col);  border-color: #7ab648; }
+  .final-mod  .cert-level { color: #a8d060; }
+  .final-low  { background: var(--low-col);  border-color: var(--yellow); }
+  .final-low  .cert-level { color: #f4c060; }
+  .final-vlow { background: var(--vlow-col); border-color: var(--red); }
+  .final-vlow .cert-level { color: #f07070; }
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
+  th { background: var(--surface); padding: 8px 10px; text-align: left; border: 1px solid var(--border); color: var(--accent); font-weight: 600; }
+  td { padding: 8px 10px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  tr:hover td { background: var(--surface); }
+  /* ── Tooltip ── */
+  .tip {
+    display: inline-block; font-size: 10px; background: var(--accent2);
+    color: #fff; border-radius: 10px; padding: 1px 7px; cursor: default;
+    margin-left: 4px; vertical-align: middle;
+  }
+  /* ── Summary row ── */
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border-radius: 8px; margin: 4px 0;
+    font-size: 13px;
+  }
+  .sum-label { color: var(--muted); }
+  .sum-val   { font-weight: 700; }
+  /* ── Scroll fade ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  /* ── Collapsible ── */
+  .collapsible summary { cursor: pointer; font-size: 12px; color: var(--accent); padding: 4px 0; }
+  .collapsible[open] summary { color: var(--text); }
+  .collapsible .coll-body { padding: 10px 0 4px; }
+  /* ── Outcome tab ── */
+  .outcome-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .otab {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    transition: all .15s;
+  }
+  .otab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .otab.rated  { border-color: var(--green); color: var(--green); }
+  .otab.rated.active { background: var(--green); color: #fff; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:600px){ .grid-2 { grid-template-columns: 1fr; } .app { flex-direction: column; } aside { width:100%; max-height: 200px; } }
+
+.pdf-html-content {
+  font-size: 14px; line-height: 1.9; color: #2b2b2b;
+  background: #fdfbf6; font-family: 'Microsoft JhengHei', 'PingFang TC', 'Segoe UI', sans-serif;
+}
+.pdf-html-content h1 { font-size: 19px; font-weight: 800; margin-bottom: 6px; color: #1a1a2e; }
+.pdf-html-content h2 { font-size: 16px; font-weight: 700; margin: 22px 0 12px; color: #4a3a7a; border-bottom: 2px solid #e0d8f0; padding-bottom: 7px; }
+.pdf-html-content h3 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; color: #2c5fa8; }
+.pdf-html-content h4 { font-size: 14px; font-weight: 700; margin: 12px 0 6px; color: #333; }
+.pdf-html-content p { margin-bottom: 11px; color: #3d3d3d; }
+.pdf-html-content ul, .pdf-html-content ol { margin: 8px 0 14px 22px; color: #3d3d3d; }
+.pdf-html-content li { margin-bottom: 7px; }
+.pdf-html-content table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 18px; background: #fff; }
+.pdf-html-content th { background: #f0ebf9; padding: 8px 11px; text-align: left; border: 1px solid #ddd5ec; color: #4a3a7a; font-weight: 700; }
+.pdf-html-content td { padding: 8px 11px; border: 1px solid #e8e4dc; color: #3d3d3d; vertical-align: top; background: #fff; }
+.pdf-html-content tr:nth-child(even) td { background: #faf8f3; }
+.pdf-html-content .ph-header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 3px solid #4a3a7a; }
+.pdf-html-content .ph-doi { font-size: 11px; color: #888; margin-bottom: 4px; }
+.pdf-html-content .ph-series { font-size: 11px; color: #2c5fa8; margin-bottom: 8px; font-weight: 600; }
+.pdf-html-content .ph-en-title { font-size: 12px; color: #777; font-style: italic; margin: 4px 0; }
+.pdf-html-content .ph-authors { font-size: 12px; color: #666; margin-top: 6px; }
+.pdf-html-content .ph-box { border-radius: 8px; padding: 13px 16px; margin: 14px 0; border-left: 4px solid; }
+.pdf-html-content .ph-box-summary { background: #eef3fc; border-color: #4a7fd6; }
+.pdf-html-content .ph-box-key { background: #eef8ee; border-color: #4caf50; }
+.pdf-html-content .ph-box-warning { background: #fdf6e3; border-color: #e0a824; }
+.pdf-html-content .ph-box-example { background: #f5f0fb; border-color: #7c5cbf; }
+.pdf-html-content .ph-box-note { background: #eef3fc; border-color: #4a7fd6; }
+.pdf-html-content .ph-box p, .pdf-html-content .ph-box li { color: #333; }
+.pdf-html-content .ph-box h3, .pdf-html-content .ph-box h4 { margin-top: 0; }
+.pdf-html-content .ph-footer-cite { margin-top: 22px; padding-top: 14px; border-top: 1px solid #e0dccf; font-size: 11px; color: #999; font-style: italic; }
+.pdf-html-content b { color: #1a1a2e; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚕ Core GRADE 互動評分教學工具</h1>
+  <p>依照 Guyatt et al., BMJ 2025 — 逐步完成每個結果變相的證據確定性評分</p>
+  <div class="progress-bar" id="progressBar"></div>
+</header>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside>
+    <div class="nav-section">
+      <div class="nav-label">📋 評分流程</div>
+      <button class="nav-item active" onclick="goStep(-1)" id="nav-1">
+        <span class="step-icon" id="icon-1">📖</span> GRADE 總覽
+      </button>
+      <button class="nav-item" onclick="goStep(0)" id="nav0">
+        <span class="step-icon" id="icon0">1</span> 研究設計起始分
+      </button>
+      <button class="nav-item" onclick="goStep(1)" id="nav1">
+        <span class="step-icon" id="icon1">2</span> Outcomes 設定
+      </button>
+      <button class="nav-item" onclick="goStep(2)" id="nav2">
+        <span class="step-icon" id="icon2">3</span> 偏誤風險
+      </button>
+      <button class="nav-item" onclick="goStep(3)" id="nav3">
+        <span class="step-icon" id="icon3">4</span> 不一致性
+      </button>
+      <button class="nav-item" onclick="goStep(4)" id="nav4">
+        <span class="step-icon" id="icon4">5</span> 間接性
+      </button>
+      <button class="nav-item" onclick="goStep(5)" id="nav5">
+        <span class="step-icon" id="icon5">6</span> 不精確性
+      </button>
+      <button class="nav-item" onclick="goStep(6)" id="nav6">
+        <span class="step-icon" id="icon6">7</span> 發表偏誤
+      </button>
+      <button class="nav-item" onclick="goStep(7)" id="nav7">
+        <span class="step-icon" id="icon7">↑</span> 升級考量
+      </button>
+      <button class="nav-item" onclick="navToSummary()" id="nav8">
+        <span class="step-icon" id="icon8">★</span> 結果總表
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">📊 目前評分</div>
+      <div id="sideScore" style="padding: 4px;"></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">🔧 操作</div>
+      <button class="nav-item" onclick="resetAll()"><span class="step-icon">↺</span> 重新開始</button>
+      <button class="nav-item" onclick="exportResult()"><span class="step-icon">⤓</span> 匯出結果</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Step -1: GRADE Overview -->
+    <div class="screen active" id="screen-1">
+      <div class="card">
+        <h2>📖 Core GRADE 方法總覽</h2>
+        <p>在開始逐步評分前，請先建立 GRADE 的整體框架概念。本頁摘錄自 Guyatt et al., <i>BMJ</i> 2025;389:e081903（Core GRADE 1）。</p>
+      </div>
+
+      <!-- 整體流程圖 -->
+      <div class="card">
+        <h3>🗺 Core GRADE 整體流程（兩大部分）</h3>
+        <div class="grid-2" style="gap:12px; margin-top:8px;">
+          <div class="info-box info-blue" style="font-size:13px;">
+            <b>左側：系統性回顧流程</b><br>
+            ① 以 PICO 格式定義回顧問題<br>
+            ② 識別並評估每個結局的重要性<br>
+            ③ 整合與總結證據<br>
+            ④ 評估每個結局的證據確定性<br>
+            ⑤ 呈現 Summary of Findings Table
+          </div>
+          <div class="info-box info-green" style="font-size:13px;">
+            <b>右側：指引制定流程</b><br>
+            ① 考量效益大小、傷害與負擔<br>
+            ② 確認證據確定性<br>
+            ③ 納入病患價值觀與偏好<br>
+            ④ 考量費用、可行性、可接受性<br>
+            ⑤ 發出建議（方向 + 強度）
+          </div>
+        </div>
+        <div class="info-box info-yellow" style="margin-top:10px; font-size:12px;">
+          <b>本工具聚焦於左側流程：</b> 協助學生完成每個結局的 GRADE 確定性評分，最終產生 Summary of Findings Table。
+        </div>
+      </div>
+
+      <!-- 四個確定性等級 -->
+      <div class="card">
+        <h3>⬤ 四個確定性等級</h3>
+        <table>
+          <tr><th>等級</th><th>符號</th><th>含義</th><th>Plain Language</th><th>起始研究設計</th></tr>
+          <tr>
+            <td><span class="cert-badge cert-high">High</span></td>
+            <td>⬤⬤⬤⬤</td>
+            <td>對真實效果非常有信心，估計值接近真實效果</td>
+            <td>治療具有效益</td>
+            <td>RCT</td>
+          </tr>
+          <tr>
+            <td><span class="cert-badge cert-mod">Moderate</span></td>
+            <td>⬤⬤⬤◯</td>
+            <td>中等信心；真實效果可能接近估計值，但可能有實質差異</td>
+            <td>治療<b>可能</b>（likely）具有效益</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><span class="cert-badge cert-low">Low</span></td>
+            <td>⬤⬤◯◯</td>
+            <td>信心有限；真實效果可能與估計值有實質差異</td>
+            <td>治療<b>或許</b>（may）具有效益</td>
+            <td>NRSI / 觀察性研究</td>
+          </tr>
+          <tr>
+            <td><span class="cert-badge cert-vlow">Very Low</span></td>
+            <td>⬤◯◯◯</td>
+            <td>幾乎無信心；真實效果很可能與估計值存在實質差異</td>
+            <td>對治療效益極不確定</td>
+            <td>病例系列</td>
+          </tr>
+        </table>
+        <div class="info-box info-red" style="margin-top:10px; font-size:12px;">
+          <b>⚠ 嚴格區分：</b> "likely"（可能）對應 <b>Moderate</b>；"may"（或許）對應 <b>Low</b>。兩者在指引建議強度上意義截然不同，不可混用。
+        </div>
+      </div>
+
+      <!-- 五個降級領域 + 兩個升級條件 -->
+      <div class="card">
+        <h3>📉 降低確定性的五個領域 ＋ 📈 升級的兩個條件</h3>
+        <table>
+          <tr><th>方向</th><th>領域</th><th>說明</th><th>最大降/升幅度</th></tr>
+          <tr><td rowspan="5" style="color:#f07070; font-weight:700; text-align:center;">⬇<br>降級<br>（RCT 及 NRSI 均適用）</td>
+            <td>① 偏誤風險<br><small>Risk of Bias</small></td><td>研究設計或執行缺陷導致系統性誤差</td><td>最多降 2 級</td></tr>
+          <tr><td>② 不一致性<br><small>Inconsistency</small></td><td>跨研究間無法解釋的結果變異性</td><td>最多降 2 級（極罕見）</td></tr>
+          <tr><td>③ 間接性<br><small>Indirectness</small></td><td>Target PICO 與研究 PICO 之間的差異</td><td>最多降 2 級</td></tr>
+          <tr><td>④ 不精確性<br><small>Imprecision</small></td><td>CI 寬或樣本數不足，效果估計不確定</td><td>最多降 2 級</td></tr>
+          <tr><td>⑤ 發表偏誤<br><small>Publication Bias</small></td><td>陰性結果選擇性未發表，高估效果</td><td>通常降 1 級</td></tr>
+          <tr><td rowspan="2" style="color:#4cd98c; font-weight:700; text-align:center;">⬆<br>升級<br>（僅 NRSI 適用）</td>
+            <td>① 大效果量<br><small>Large Effect</small></td><td>RR &gt; 2 或 &lt; 0.5（升 1 級）；RR &gt; 5 或 &lt; 0.2（升 2 級）</td><td>最多升 2 級</td></tr>
+          <tr><td>② 劑量反應梯度<br><small>Dose-Response</small></td><td>暴露量越大效果越大，支持因果關係</td><td>升 1 級</td></tr>
+        </table>
+        <div class="info-box info-blue" style="margin-top:10px; font-size:12px;">
+          <b>整體觀原則：</b> 考量每個個別領域後，需後退一步進行整體評估。GRADE 是促進深思熟慮的判斷架構，而非機械式規則。
+        </div>
+      </div>
+
+      <!-- PICO 制定原則 -->
+      <div class="card">
+        <h3>🎯 PICO 制定關鍵原則</h3>
+        <div class="grid-2" style="gap:10px; margin-top:6px;">
+          <div class="info-box info-blue" style="font-size:12px;">
+            <b>結局重要性評分（9 分制）</b><br>
+            7–9 分：關鍵結局（Critical）→ 最低確定性 = 整體確定性<br>
+            4–6 分：重要但非關鍵（Important）<br>
+            1–3 分：不重要（不納入評估）
+          </div>
+          <div class="info-box info-yellow" style="font-size:12px;">
+            <b>亞組效應處理原則</b><br>
+            • 需事先（a priori）指定，且≤3個<br>
+            • 必須包含方向（如「老年人中效果更大」）<br>
+            • 大量未指定方向的假設 → 損害可信度
+          </div>
+        </div>
+        <div class="info-box info-green" style="margin-top:10px; font-size:12px;">
+          <b>相對效應 vs 絕對效應：</b> 相對效應（RR/OR/HR）通常在亞組間穩定；絕對效應（風險差）對病患更重要。<br>
+          同一 RR = 0.5：低風險族群絕對降低 1%；高風險族群絕對降低 20% → 可能導致不同的建議強度。
+        </div>
+      </div>
+
+      <!-- 建議強度 -->
+      <div class="card">
+        <h3>📋 建議方向與強度（供參考）</h3>
+        <table>
+          <tr><th>建議類型</th><th>術語</th><th>臨床意涵</th></tr>
+          <tr><td style="color:#4cd98c;"><b>強建議支持</b></td><td>Recommend FOR</td><td>大多數或幾乎所有知情病患都會選擇該介入措施</td></tr>
+          <tr><td style="color:#a8d060;"><b>弱建議支持</b></td><td>Suggest FOR</td><td>大多數知情病患會選擇，但相當比例不會；強調共同決策</td></tr>
+          <tr><td style="color:#f4c060;"><b>弱建議反對</b></td><td>Suggest AGAINST</td><td>大多數知情病患會拒絕，但相當比例不會</td></tr>
+          <tr><td style="color:#f07070;"><b>強建議反對</b></td><td>Recommend AGAINST</td><td>大多數或幾乎所有知情病患都會拒絕該介入措施</td></tr>
+        </table>
+        <div class="info-box info-yellow" style="margin-top:10px; font-size:12px;">
+          <b>重要：</b> 高確定性 ≠ 必然強建議。建議強度還取決於效益—傷害平衡、病患價值觀與偏好、費用與可行性。
+        </div>
+      </div>
+
+      <!-- 教材重點 -->
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 1: overview of the Core GRADE approach.<br>
+          <i>BMJ</i> 2025;389:e081903 ｜ 繁體中文整理版（GRADE 整體架構、PICO 制定、確定性評分、建議強度）
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openOverviewPDF()">
+          📖 查看 Core GRADE 1 教材重點
+        </button>
+      </div>
+
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="goStep(0)">
+          ✅ 了解了，開始評分 →
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 0: Study Design -->
+    <div class="screen" id="screen0">
+      <div class="card">
+        <h2>第一步：研究設計起始確定性</h2>
+        <p>Core GRADE 依照研究設計類型設定初始確定性等級。請選擇您文獻的主要研究設計。</p>
+      </div>
+
+      <div class="card">
+        <h3>🔬 研究設計類型</h3>
+        <div id="designOptions">
+          <div class="tree-node" onclick="selectDesign('rct')" id="d_rct">
+            <label>
+              <div class="q-title">⚡ 隨機對照試驗（RCT / Randomised Controlled Trial）</div>
+              <div class="q-detail">含 meta-analysis of RCTs → 起始：⬤⬤⬤⬤ High（高確定性）</div>
+            </label>
+          </div>
+          <div class="tree-node" onclick="selectDesign('nrsi')" id="d_nrsi">
+            <label>
+              <div class="q-title">🔍 非隨機研究（NRSI / 觀察性研究）</div>
+              <div class="q-detail">含世代研究、病例對照研究、橫斷面研究 → 起始：⬤⬤◯◯ Low（低確定性）</div>
+            </label>
+          </div>
+          <div class="tree-node" onclick="selectDesign('case')" id="d_case">
+            <label>
+              <div class="q-title">📋 病例系列 / 單臂試驗（Case Series / Single-arm）</div>
+              <div class="q-detail">缺乏同期對照 → 起始：⬤◯◯◯ Very Low，幾乎必然維持最低等級</div>
+            </label>
+          </div>
+        </div>
+        <div id="designFeedback" style="margin-top: 12px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>📘 Core GRADE 證據確定性四等級</h3>
+        <table>
+          <tr><th>等級</th><th>標誌</th><th>涵義</th><th>Plain Language</th></tr>
+          <tr><td><span class="cert-badge cert-high">High</span></td><td>⬤⬤⬤⬤</td><td>對真實效果非常有信心</td><td>reduces / increases / has little to no effect</td></tr>
+          <tr><td><span class="cert-badge cert-mod">Moderate</span></td><td>⬤⬤⬤◯</td><td>中等信心；真實效果可能接近估計值</td><td><b>probably</b> reduces / increases</td></tr>
+          <tr><td><span class="cert-badge cert-low">Low</span></td><td>⬤⬤◯◯</td><td>信心有限；真實效果可能有實質差異</td><td><b>may</b> reduce / increase</td></tr>
+          <tr><td><span class="cert-badge cert-vlow">Very Low</span></td><td>⬤◯◯◯</td><td>幾乎無信心；效果非常不確定</td><td>the effect is <b>very uncertain</b></td></tr>
+        </table>
+        <div class="info-box info-blue" style="margin-top:12px;">
+          <b>🔑 關鍵原則：</b> RCT 從 High 開始 → 可能被扣分降級；NRSI 從 Low 開始 → 可能被扣分降至 Very Low，或因特殊條件升級至 Moderate
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goStep(1)" id="btn0next" disabled>下一步：設定評估 Outcomes →</button>
+      </div>
+    </div>
+
+    <!-- Step 1: Outcomes -->
+    <div class="screen" id="screen1">
+      <div class="card">
+        <h2>第二步：設定評估 Outcomes</h2>
+        <p>GRADE 對每個 outcome 分別評估確定性。請輸入您文獻中要評分的 outcomes（至少 1 個，建議填寫 2-4 個）。</p>
+      </div>
+
+      <div class="card">
+        <h3>🎯 Outcome 重要性分類（9 分制）</h3>
+        <table>
+          <tr><th>分數</th><th>分類</th><th>說明</th></tr>
+          <tr><td>7–9</td><td style="color:#f07070;">關鍵 Critical</td><td>必須納入評估；整體確定性由最低確定性的關鍵 outcome 決定</td></tr>
+          <tr><td>4–6</td><td style="color:#f4c060;">重要 Important</td><td>納入評估，但不決定整體確定性</td></tr>
+          <tr><td>1–3</td><td style="color:var(--muted);">不重要</td><td>通常不納入</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>➕ 新增 Outcome</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <input type="text" id="outcomeNameInput" placeholder="Outcome 名稱（如：全因死亡率）" style="flex:1; min-width:200px; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:13px; outline:none;">
+          <select id="outcomeImport" style="min-width:130px;">
+            <option value="critical">關鍵 (7-9分)</option>
+            <option value="important">重要 (4-6分)</option>
+          </select>
+          <button class="btn btn-primary" onclick="addOutcome()">➕ 新增</button>
+        </div>
+        <div class="info-box info-yellow">
+          <b>💡 建議：</b> 可直接輸入您的文獻 outcomes，例如：「角膜上皮癒合率」、「疼痛 VAS 分數」、「感染相關不良事件」
+        </div>
+        <div id="outcomeList" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(0)">← 上一步</button>
+        <button class="btn btn-primary" onclick="startDomainRating()" id="btn1next" disabled>開始逐項 Domain 評分 →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Risk of Bias -->
+    <div class="screen" id="screen2">
+      <div class="card">
+        <h2>第三步：偏誤風險（Risk of Bias）</h2>
+        <p>評估納入研究是否存在系統性偏差。偏誤風險是影響確定性最常見的降級原因。</p>
+      </div>
+
+      <div class="card">
+        <h3>📌 評估邏輯（依研究設計）</h3>
+        <div class="info-box info-blue">
+          <b>RCT 核心評估項目（ROBUST-RCT 優先）：</b><br>
+          隨機序列生成、分配隱蔽、受試者盲化、醫護人員盲化、結果評估者盲化、遺漏數據
+        </div>
+        <div class="info-box info-yellow">
+          <b>NRSI 核心評估（Newcastle-Ottawa / CLARITY）：</b><br>
+          殘差干擾（Residual confounding）— NRSI 已因此從 Low 起始；若有額外偏誤，可繼續降至 Very Low
+        </div>
+        <div class="info-box info-green">
+          <b>⚡ 偏誤方向考量：</b> 若偏誤方向與研究結論相反（偏誤反強化結論），可不降級
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🔵 對每個 Outcome 的降級決策</h3>
+        <div class="outcome-tabs" id="robTabs"></div>
+        <div id="robContent"></div>
+      </div>
+
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 4: risk of bias, publication bias, and reasons for rating up certainty.<br>
+          <i>BMJ</i> 2025;389:e083864 ｜ 繁體中文整理版（含偏誤風險、發表偏誤、升級三部分）
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openRobPDF()">
+          📖 查看 Core GRADE 4 教材重點
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(1)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(3)">下一步：不一致性 →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Inconsistency -->
+    <div class="screen" id="screen3">
+      <div class="card">
+        <h2>第四步：不一致性（Inconsistency）</h2>
+        <p>評估跨研究間的無法解釋的結果變異性。核心工具：Forest Plot 視覺判讀 + I² 統計量。</p>
+      </div>
+
+      <div class="card">
+        <h3>📊 判斷三大視覺標準</h3>
+        <table>
+          <tr><th>標準</th><th>不一致性較低</th><th>傾向降級</th></tr>
+          <tr><td>① 點估計差異</td><td>各研究點估計相近（如 RR 0.71–0.76）</td><td>研究間差異大（如 RR 0.44 vs. 1.25）</td></tr>
+          <tr><td>② CI 重疊程度</td><td>各研究 CI 大部分重疊</td><td>CI 完全不重疊，方向相反</td></tr>
+          <tr><td>③ 閾值同側</td><td>絕大多數點估計在閾值同側</td><td>相當比例分布在閾值兩側</td></tr>
+        </table>
+        <div class="info-box info-yellow" style="margin-top:10px;">
+          <b>I² 指引：</b> ＜30% → 通常不降級 ｜ 30-60% → 結合視覺判斷 ｜ ＞60% → 傾向降級（但仍看閾值位置）<br>
+          <b>警告：</b> I² 可能誤導！樣本大→假性高 I²；樣本小→假性低 I²。視覺判讀優先。
+        </div>
+        <div class="info-box info-blue">
+          <b>二元 vs 連續結果：</b> 二元 → 以相對效果（RR/OR）判斷一致性；連續 → 以絕對效果（MD）判斷。<br>
+          切勿以絕對效果評估二元結果的一致性 → 會產生假性不一致。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🔵 對每個 Outcome 的降級決策</h3>
+        <div class="outcome-tabs" id="incTabs"></div>
+        <div id="incContent"></div>
+      </div>
+
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 3: rating certainty of evidence — assessing inconsistency.<br>
+          <i>BMJ</i> 2025;389:e081905 ｜ 繁體中文整理版
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openIncPDF()">
+          📖 查看 Core GRADE 3 教材重點
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(2)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(4)">下一步：間接性 →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Indirectness -->
+    <div class="screen" id="screen4">
+      <div class="card">
+        <h2>第五步：間接性（Indirectness）</h2>
+        <p>評估 Target PICO 與現有研究 PICO 之間的差異。差異越大，證據越間接，確定性越低。<br>
+        <small style="color:var(--muted);">依據：Guyatt et al., Core GRADE 5, BMJ 2025;389:e083865</small></p>
+      </div>
+
+      <!-- ── 核心判斷表 ── -->
+      <div class="card">
+        <h3>🎯 Indirectness 四大來源與降級可能性（Core GRADE 5, Table 2）</h3>
+        <table>
+          <tr><th>PICO 要素</th><th>常見間接性原因</th><th>降級可能性</th></tr>
+          <tr>
+            <td><b style="color:#7ec8e3;">P</b> 族群</td>
+            <td>年齡差異（兒童↔成人↔老年）；病況隨時間改變（如 COVID-19 變異株）；共病症分布差異</td>
+            <td><span class="domain-tag">通常較低</span><br><small style="color:var(--muted);">相對效果在族群間通常穩定；除非有機制上的理由認為會有差異</small></td>
+          </tr>
+          <tr>
+            <td><b style="color:#a8d060;">I</b> 介入</td>
+            <td>藥物劑量 / 途徑 / 持續時間不同；High non-adherence；介入描述不足；技術演進（裝置）；試驗中允許轉換治療</td>
+            <td><span class="domain-tag warn">中等可能性</span><br><small style="color:var(--muted);">取決於潛在生物學機制及 non-adherence 嚴重程度</small></td>
+          </tr>
+          <tr>
+            <td><b style="color:#f4c060;">C</b> 比較</td>
+            <td>使用 placebo 而非 active comparator；使用次佳舊有替代方案；業界贊助試驗使用次佳 comparator</td>
+            <td><span class="domain-tag warn">相當可能性</span><br><small style="color:var(--muted);">尤其在有效治療已存在、仍以 placebo 作對照時</small></td>
+          </tr>
+          <tr>
+            <td><b style="color:#f07070;">O</b> 結局</td>
+            <td>追蹤時間過短；使用 <b>surrogate outcome</b> 而非 patient-important outcome；測量方式不同（有症狀 vs 無症狀）</td>
+            <td><span class="domain-tag danger">高可能性</span><br><small style="color:var(--muted);">Surrogate → 幾乎必降級；<b>surrogate 可考慮降兩級</b></small></td>
+          </tr>
+        </table>
+
+        <div class="info-box info-yellow" style="margin-top:12px;">
+          <b>⚡ Surrogate Outcome 降級特別說明：</b><br>
+          一般 indirectness 降一級；但若 surrogate 與 patient-important outcome 的關聯十分薄弱（如：透析病患的鈣磷代謝指標 vs. 心肌梗塞），可考慮降兩級。<br>
+          骨密度 vs. 骨折 → 通常降一級 ｜ 血中生化指標 vs. 心血管死亡 → 可能降兩級
+        </div>
+
+        <div class="info-box info-blue" style="margin-top:10px;">
+          <b>🔑 Indirectness vs. Inconsistency 判斷原則：</b><br>
+          若同時有老年人與年輕人的資料 → 可「檢驗」效果差異 → <b>Inconsistency</b> 問題<br>
+          若幾乎所有資料均來自年輕人，但需推論老年人 → 無法檢驗 → <b>Indirectness</b> 問題
+        </div>
+      </div>
+
+      <!-- ── 兩種情境 ── -->
+      <details class="collapsible card" style="padding:14px 18px;">
+        <summary>📖 兩種遭遇 Indirectness 的情境（展開對照教材）</summary>
+        <div class="coll-body">
+          <div class="grid-2" style="gap:12px; margin-top:8px;">
+            <div class="info-box info-blue">
+              <b>情境一：搜尋 Direct Evidence 過程中遭遇</b><br>
+              找到的研究有些許 PICO 差異（族群年齡偏大、不同共病症）<br>
+              → <b>通常不需降級</b>（共病症差異很少導致相對效果不同）<br>
+              <b>例外：</b> High non-adherence、Surrogate outcome、次佳 comparator → 需降級
+            </div>
+            <div class="info-box info-yellow">
+              <b>情境二：刻意搜尋 Indirect Evidence</b><br>
+              Direct evidence 不存在 / 確定性極低時，改用其他族群或相關病況的資料<br>
+              → <b>幾乎必須降級</b>（間接性是不可避免的）<br>
+              <b>案例：</b> 兒科 pancreatitis → 以成人抗生素資料推論（降一級）
+            </div>
+          </div>
+          <div class="info-box info-red" style="margin-top:10px; font-size:12px;">
+            <b>⚠ COVID-19 警示案例：</b> Casirivimab / imdevimab 的 RCT 在 2020–2021 年對當時病毒有效，但 Omicron 變異株後 spike protein 改變 → 原始 RCT 對新族群變成 <b>極度 indirect evidence</b> → WHO 強烈建議反對繼續使用。<br>
+            <b>教學意涵：</b> 族群「隨時間改變」也是 P 的 indirectness，需持續更新評估。
+          </div>
+        </div>
+      </details>
+
+      <!-- ── 降級決策 ── -->
+      <div class="card">
+        <h3>🔵 對每個 Outcome 的降級決策</h3>
+        <div class="outcome-tabs" id="indTabs"></div>
+        <div id="indContent"></div>
+      </div>
+
+      <!-- ── 延伸閱讀 ── -->
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 5: rating certainty of evidence — assessing indirectness.<br>
+          <i>BMJ</i> 2025;389:e083865 ｜ 繁體中文整理版
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openPDF()">
+          📖 查看 Core GRADE 5 教材重點
+        </button>
+        <p style="font-size:11px; color:var(--muted); margin-top:8px; text-align:center;">
+        </p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(3)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(5)">下一步：不精確性 →</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Imprecision -->
+    <div class="screen" id="screen5">
+      <div class="card">
+        <h2>第六步：不精確性（Imprecision）</h2>
+        <p>Core GRADE 第二篇核心流程：先選閾值 → 判斷 CI 與閾值關係 → 若效果大則評估 OIS 樣本數。每個 Outcome 獨立走完引導步驟後產生最終降級決策。</p>
+      </div>
+
+      <details class="collapsible card" style="padding:14px 18px;">
+        <summary>📖 展開教材參考表格（評估時對照用）</summary>
+        <div class="coll-body">
+          <h3 style="margin-bottom:8px; color:var(--accent);">Step A：閾值選擇邏輯</h3>
+          <table>
+            <tr><th></th><th>MID 閾值（首選）</th><th>Null 閾值（MID 不存在時）</th></tr>
+            <tr><td><b>核心問題</b></td><td>效果是否達到臨床重要性？</td><td>是否存在真實治療效果？</td></tr>
+            <tr><td><b>適用情境</b></td><td>臨床指引；有病患觀點文獻；PRO 量表有 MID 數據</td><td>MID 難以確立；系統回顧不納入 MID 判斷；二元結果基準風險極低</td></tr>
+            <tr><td><b>MID 來源</b></td><td>病患回報結果研究、現有文獻、焦點小組、臨床共識</td><td>統計學 null（RD = 0 或 MD = 0）</td></tr>
+          </table>
+          <h3 style="margin-top:14px; margin-bottom:8px; color:var(--accent);">Step B–C：CI 與閾值關係 → 降級決策</h3>
+          <table>
+            <tr><th>情境</th><th>描述</th><th>Null 閾值</th><th>MID 閾值</th></tr>
+            <tr><td>(a)</td><td>點估計遠超 MID，CI 窄，未跨任一閾值</td><td>✅ 不降級</td><td>✅ 不降級</td></tr>
+            <tr><td>(b)</td><td>點估計在 Null～MID 之間，CI 跨 MID 但未跨 Null</td><td>✅ 不降級</td><td>⬇ 降一級</td></tr>
+            <tr><td>(c)</td><td>點估計近 Null，CI 寬，跨越 Null 及 MID 一側</td><td>⬇ 降一級</td><td>⬇ 降一級</td></tr>
+            <tr><td>(d)</td><td>CI 極寬，同時涵蓋 MID for benefit 與 MID for harm（兩端）</td><td>⬇⬇ 考慮降兩級</td><td>⬇⬇ 考慮降兩級</td></tr>
+          </table>
+          <div class="info-box info-yellow" style="margin-top:10px; font-size:12px;">
+            <b>降兩級觸發條件：</b> ① CI 同時跨越 benefit 與 harm 兩端 MID ｜ ② 最適切的 plain language 應為 "may"（Low）而非 "likely"（Moderate）→ 任一條件成立即考慮降兩級
+          </div>
+          <h3 style="margin-top:14px; margin-bottom:8px; color:var(--accent);">Step D–E：OIS 樣本數評估（效果大且 CI 未跨閾值時觸發）</h3>
+          <div class="info-box info-blue" style="font-size:12px; margin-bottom:8px;">
+            <b>觸發條件：</b> CI 未跨越閾值（看似不需降級），但 RR reduction &gt; 30–40%（二元）或效果量明顯大（連續）<br>
+            <b>原因：</b> 早期小型研究的大效果往往無法後續複製（regression to the mean）
+          </div>
+          <table>
+            <tr><th>實際 N 與 OIS 比較</th><th>降級決策</th></tr>
+            <tr><td>實際 N ≥ OIS（或連續結果每組 ≥ 400，共 ≥ 800）</td><td>✅ 不降級</td></tr>
+            <tr><td>30% OIS &lt; 實際 N &lt; OIS</td><td>⬇ 降一級</td></tr>
+            <tr><td>實際 N ≤ 30% OIS</td><td>⬇⬇ 考慮降兩級</td></tr>
+            <tr><td>RR CI ratio ≥ 3 或 OR CI ratio ≥ 2.5</td><td>⬇⬇ 建議進一步計算 OIS 確認</td></tr>
+          </table>
+          <div class="info-box info-green" style="margin-top:8px; font-size:12px;">
+            <b>OIS 計算參數（二元）：</b> α = 0.05，β = 0.20，control event rate，RRR 設 20–25%<br>
+            <b>連續結果簡化規則：</b> 每組 ≥ 400 人（共 ≥ 800）→ 不降級<br>
+            <b>計算工具：</b> <a href="https://www.openepi.com/SampleSize/SSCohort.htm" target="_blank" style="color:var(--accent);">OpenEpi.com</a>
+          </div>
+        </div>
+      </details>
+
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 2: choosing the target of certainty rating and assessing imprecision.<br>
+          <i>BMJ</i> 2025;389:e081904 ｜ 繁體中文整理版
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openImpPDF()">
+          📖 查看 Core GRADE 2 教材重點
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>🔵 逐步引導評分</h3>
+        <div class="outcome-tabs" id="impTabs"></div>
+        <div id="impContent"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(4)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(6)">下一步：發表偏誤 →</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Publication Bias -->
+    <div class="screen" id="screen6">
+      <div class="card">
+        <h2>第七步：發表偏誤（Publication Bias）</h2>
+        <p>陰性結果未發表 → 系統性高估效果。須主動懷疑，尤其是小型業界贊助研究。</p>
+      </div>
+
+      <div class="card">
+        <h3>🚨 高度懷疑發表偏誤的情境</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="info-box info-red">
+            <b>最高風險：</b><br>
+            全部研究均為小型 + 多數由業界贊助<br>
+            <small>案例：類黃酮痔瘡研究（11篇全數業界贊助）</small>
+          </div>
+          <div class="info-box info-yellow">
+            <b>可偵測方法：</b><br>
+            漏斗圖視覺判讀（需≥10篇）<br>
+            Egger's / Begg's 統計檢定<br>
+            直接查閱 Registry / FDA 資料庫
+          </div>
+        </div>
+        <div class="info-box info-blue" style="margin-top:10px;">
+          <b>Reboxetine 警示案例：</b> 未發表研究揭露後，發現已發表數據高估效益達 115%。業界贊助的壓制是最危險的發表偏誤來源。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🔵 對每個 Outcome 的降級決策</h3>
+        <div class="outcome-tabs" id="pubTabs"></div>
+        <div id="pubContent"></div>
+      </div>
+
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 4: risk of bias, publication bias, and reasons for rating up certainty.<br>
+          <i>BMJ</i> 2025;389:e083864 ｜ 繁體中文整理版（含偏誤風險、發表偏誤、升級三部分）
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openRobPDF()">
+          📖 查看 Core GRADE 4 教材重點
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(5)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(7)">下一步：升級考量 →</button>
+      </div>
+    </div>
+
+    <!-- Step 7: Rating Up -->
+    <div class="screen" id="screen7">
+      <div class="card">
+        <h2>第八步：升級考量（Rating Up）</h2>
+        <div class="info-box info-red">
+          <b>⚠ 重要：</b> 升級 <b>僅適用於觀察性研究（NRSI）</b>，RCT 不適用升級。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⬆ 兩大升級條件</h3>
+        <div class="grid-2">
+          <div class="info-box info-green">
+            <b>① 大效果（Large Effect）</b><br>
+            RR &gt; 2 或 &lt; 0.5 → 考慮升一級<br>
+            RR &gt; 5 或 &lt; 0.2 → 考慮升兩級<br>
+            <small>前提：結果一致且無嚴重偏誤</small>
+          </div>
+          <div class="info-box info-green">
+            <b>② 劑量反應梯度（Dose-Response）</b><br>
+            暴露量越大 → 效果越大 → 升一級<br>
+            <small>增加因果推論可信度</small>
+          </div>
+        </div>
+        <div class="info-box info-yellow" style="margin-top:10px;">
+          舊版第三升級條件「可預測偏誤方向」已從 Core GRADE 中移除，不再適用。
+        </div>
+      </div>
+
+      <div class="card" id="ratingUpCard">
+        <h3>🔵 對每個 Outcome 的升級決策（僅 NRSI 適用）</h3>
+        <div class="outcome-tabs" id="upTabs"></div>
+        <div id="upContent"></div>
+      </div>
+
+      <div class="card" style="border-color: var(--accent2);">
+        <h3 style="color:var(--accent2);">📄 教材原文</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">
+          Guyatt et al., Core GRADE 4: risk of bias, publication bias, and reasons for rating up certainty.<br>
+          <i>BMJ</i> 2025;389:e083864 ｜ 繁體中文整理版（升級條件：大效果量與劑量反應梯度）
+        </p>
+        <button class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;" onclick="openRobPDF()">
+          📖 查看 Core GRADE 4 教材重點
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(6)">← 上一步</button>
+        <button class="btn btn-primary" onclick="navToSummary()">產生證據總表 →</button>
+      </div>
+    </div>
+
+    <!-- Step 8: Summary -->
+    <div class="screen" id="screen8">
+      <div class="card">
+        <h2>📊 證據確定性評分總表（Summary of Findings）</h2>
+        <p>以下為您文獻各 Outcome 的完整 GRADE 評分結果。</p>
+      </div>
+
+      <div id="summaryTable"></div>
+
+      <div class="card" id="overallCard" style="display:none;">
+        <h3>🎯 整體確定性</h3>
+        <div id="overallResult"></div>
+        <div class="info-box info-blue" style="margin-top:12px;">
+          <b>判斷原則：</b> 整體確定性 ＝ 所有<span style="color:#f07070;">關鍵（Critical）</span> Outcomes 中最低的確定性等級
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📝 Plain Language Summary 範本</h3>
+        <div id="plainLang"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goStep(7)">← 返回修改</button>
+        <button class="btn btn-success" onclick="exportResult()">⤓ 匯出評分報告</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer style="
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+">
+  本教學工具設計作者：<b style="color:var(--text);">土城醫院 鄭湜玄 臨床藥師</b>
+  &nbsp;｜&nbsp;
+  依據 Guyatt et al., Core GRADE 系列, <i>BMJ</i> 2025 製作
+  &nbsp;｜&nbsp;
+  僅供教育訓練使用
+</footer>
+
+<script>
+// ═══════════════════════════════════════
+// State
+// ═══════════════════════════════════════
+let state = {
+  design: null, // 'rct' | 'nrsi' | 'case'
+  outcomes: [], // [{id, name, importance, scores}]
+  currentOutcomeIdx: 0,
+  currentStep: -1,
+  completed: new Set()
+};
+
+const STEPS = 10;
+const DOMAIN_KEYS = ['rob','inc','ind','imp','pub','up'];
+const DOMAIN_LABELS = ['偏誤風險','不一致性','間接性','不精確性','發表偏誤','升級'];
+const CERT_LEVELS = ['Very Low','Low','Moderate','High'];
+const CERT_COLORS = ['cert-vlow','cert-low','cert-mod','cert-high'];
+
+function initOutcomeScores(outcome) {
+  outcome.scores = {};
+  DOMAIN_KEYS.forEach(k => outcome.scores[k] = 0);
+  outcome._imp = { thresholdType: null, midExists: null, pePos: null, ciScenario: null, effectBig: null, oisResult: null, midSource: '' };
+}
+
+// ═══════════════════════════════════════
+// Navigation
+// ═══════════════════════════════════════
+function goStep(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(s => s.classList.remove('active'));
+  const screenId = n === -1 ? 'screen-1' : 'screen' + n;
+  const navId = n === -1 ? 'nav-1' : 'nav' + n;
+  document.getElementById(screenId).classList.add('active');
+  document.getElementById(navId).classList.add('active');
+  state.currentStep = n;
+  if(n >= 2 && n <= 7) renderDomainStep(n);
+  updateProgress();
+  updateSideScore();
+}
+
+function updateProgress() {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = '';
+  for(let i=0;i<STEPS;i++) {
+    const d = document.createElement('div');
+    const pos = state.currentStep === -1 ? -1 : state.currentStep;
+    d.className = 'step-dot' + (i < pos + 1 ? ' done' : i === pos + 1 ? ' active' : '');
+    bar.appendChild(d);
+  }
+}
+
+// ═══════════════════════════════════════
+// Step 0: Design
+// ═══════════════════════════════════════
+function selectDesign(type) {
+  state.design = type;
+  ['rct','nrsi','case'].forEach(t => document.getElementById('d_'+t).classList.remove('selected'));
+  document.getElementById('d_'+type).classList.add('selected');
+  const map = {
+    rct: { label: 'High', cls: 'cert-high', msg: 'RCT 起始：⬤⬤⬤⬤ High 確定性。可能因五個降級領域而降低。', init: 3 },
+    nrsi: { label: 'Low', cls: 'cert-low', msg: 'NRSI 已因殘差干擾從 Low 起始。可能再降至 Very Low，或因大效果/劑量反應而升至 Moderate。', init: 1 },
+    case: { label: 'Very Low', cls: 'cert-vlow', msg: '病例系列幾乎永遠維持 Very Low。除非有危害且對照組事件率趨近零的特殊情況。', init: 0 }
+  };
+  const m = map[type];
+  // store base cert per outcome
+  state.baseCert = m.init;
+  document.getElementById('designFeedback').innerHTML = `
+    <div class="info-box info-green">
+      <b>起始確定性：</b> <span class="cert-badge ${m.cls}">${m.label}</span><br>
+      <small>${m.msg}</small>
+    </div>`;
+  document.getElementById('btn0next').disabled = false;
+  updateSideScore();
+}
+
+// ═══════════════════════════════════════
+// Step 1: Outcomes
+// ═══════════════════════════════════════
+function addOutcome() {
+  const name = document.getElementById('outcomeNameInput').value.trim();
+  const imp  = document.getElementById('outcomeImport').value;
+  if(!name) { alert('請輸入 Outcome 名稱'); return; }
+  const id = 'oc_' + Date.now();
+  const oc = { id, name, importance: imp, scores: {} };
+  initOutcomeScores(oc);
+  state.outcomes.push(oc);
+  document.getElementById('outcomeNameInput').value = '';
+  renderOutcomeList();
+  document.getElementById('btn1next').disabled = state.outcomes.length === 0;
+}
+
+function removeOutcome(id) {
+  state.outcomes = state.outcomes.filter(o => o.id !== id);
+  renderOutcomeList();
+  document.getElementById('btn1next').disabled = state.outcomes.length === 0;
+}
+
+function renderOutcomeList() {
+  const el = document.getElementById('outcomeList');
+  if(!state.outcomes.length) { el.innerHTML = '<p style="color:var(--muted); font-size:13px;">尚未新增任何 Outcome</p>'; return; }
+  el.innerHTML = state.outcomes.map((o,i) => `
+    <div class="domain-row">
+      <span style="font-size:16px;">${o.importance==='critical' ? '🔴' : '🟡'}</span>
+      <span class="domain-name">${o.name}</span>
+      <span class="domain-tag ${o.importance==='critical'?'danger':'warn'}">${o.importance==='critical'?'關鍵':'重要'}</span>
+      <button class="btn btn-ghost" style="padding:4px 10px; font-size:12px;" onclick="removeOutcome('${o.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function startDomainRating() {
+  if(!state.outcomes.length) return;
+  goStep(2);
+}
+
+// ═══════════════════════════════════════
+// Domain Steps (2-7)
+// ═══════════════════════════════════════
+const DOMAIN_INFO = {
+  rob:  { key:'rob',  stepIdx:2, tabId:'robTabs',  contentId:'robContent' },
+  inc:  { key:'inc',  stepIdx:3, tabId:'incTabs',  contentId:'incContent' },
+  ind:  { key:'ind',  stepIdx:4, tabId:'indTabs',  contentId:'indContent' },
+  imp:  { key:'imp',  stepIdx:5, tabId:'impTabs',  contentId:'impContent' },
+  pub:  { key:'pub',  stepIdx:6, tabId:'pubTabs',  contentId:'pubContent' },
+  up:   { key:'up',  stepIdx:7, tabId:'upTabs',   contentId:'upContent'  }
+};
+
+const DOMAIN_OPTS = {
+  rob:  [ {val:0, lbl:'✅ 不降級', detail:'低偏誤研究主導，或偏誤方向強化結論'}, {val:-1, lbl:'⬇ 降一級（嚴重）', detail:'高偏誤研究主導 > 55-65% 權重'}, {val:-2, lbl:'⬇⬇ 降兩級（非常嚴重）', detail:'幾乎全為高偏誤研究且偏誤極嚴重'} ],
+  inc:  [ {val:0, lbl:'✅ 不降級', detail:'點估計相近、CI 重疊、均在閾值同側'}, {val:-1, lbl:'⬇ 降一級（嚴重）', detail:'點估計差異大或 CI 部分跨閾值兩側'}, {val:-2, lbl:'⬇⬇ 降兩級（非常嚴重）', detail:'研究結果方向相反且 CI 不重疊（極罕見）'} ],
+  ind:  [ {val:0, lbl:'✅ 不降級', detail:'PICO 與目標族群高度契合'}, {val:-1, lbl:'⬇ 降一級（嚴重）', detail:'一項 PICO 要素有實質差異（如 surrogate outcome）'}, {val:-2, lbl:'⬇⬇ 降兩級（非常嚴重）', detail:'多項 PICO 要素均存在嚴重間接性'} ],
+  imp:  'WIZARD', // handled by renderImprecisionWizard()
+  pub:  [ {val:0, lbl:'✅ 不降級', detail:'無發表偏誤跡象，或有大型 RCT 且非業界主導'}, {val:-1, lbl:'⬇ 降一級（可能）', detail:'全為小型研究或多數業界贊助，漏斗圖不對稱'} ],
+  up:   [ {val:0, lbl:'不升級（或 RCT 不適用）', detail:''}, {val:1, lbl:'⬆ 升一級：大效果（RR > 2 or < 0.5）', detail:'僅 NRSI 適用'}, {val:2, lbl:'⬆⬆ 升兩級：極大效果（RR > 5 or < 0.2）', detail:'僅 NRSI 適用'}, {val:1, lbl:'⬆ 升一級：劑量反應梯度', detail:'僅 NRSI 適用；不可與大效果疊加超過 +2'} ]
+};
+
+function renderDomainStep(stepIdx) {
+  const domKey = DOMAIN_KEYS[stepIdx - 2];
+  const info = DOMAIN_INFO[domKey];
+  const tabsEl = document.getElementById(info.tabId);
+  const contEl = document.getElementById(info.contentId);
+  if(!tabsEl || !contEl) return;
+
+  // Rebuild tabs — rated = has been explicitly scored (optIdx recorded)
+  tabsEl.innerHTML = state.outcomes.map((o,i) => {
+    const hasRated = domKey === 'imp'
+      ? (o._optIdx && o._optIdx['imp'] !== undefined)
+      : (o._optIdx && o._optIdx[domKey] !== undefined);
+    return `<div class="otab ${hasRated ? 'rated' : ''}" id="tab_${domKey}_${i}" onclick="selectDomainOutcome('${domKey}',${i})">${o.name}${hasRated ? ' ✓' : ''}</div>`;
+  }).join('');
+
+  // Restore last active outcome for this domain, default to 0
+  if(!state._lastDomainIdx) state._lastDomainIdx = {};
+  const lastIdx = state._lastDomainIdx[domKey] !== undefined ? state._lastDomainIdx[domKey] : 0;
+  selectDomainOutcome(domKey, lastIdx);
+}
+
+function selectDomainOutcome(domKey, idx) {
+  // Remember which outcome was last viewed for this domain
+  if(!state._lastDomainIdx) state._lastDomainIdx = {};
+  state._lastDomainIdx[domKey] = idx;
+
+  // highlight tab
+  state.outcomes.forEach((_,i) => {
+    const t = document.getElementById('tab_'+domKey+'_'+i);
+    if(t) t.classList.toggle('active', i===idx);
+  });
+
+  if(domKey === 'imp') {
+    renderImprecisionWizard(idx);
+    return;
+  }
+
+  const info = DOMAIN_INFO[domKey];
+  const contEl = document.getElementById(info.contentId);
+  const oc = state.outcomes[idx];
+  const opts = DOMAIN_OPTS[domKey];
+
+  const certBefore = calcCertUpToDomain(idx, domKey);
+  const certLabel = CERT_LEVELS[Math.max(0, Math.min(3, certBefore))];
+  const certCls = CERT_COLORS[Math.max(0, Math.min(3, certBefore))];
+
+  const nrsiWarning = domKey==='up' && state.design!=='nrsi'
+    ? '<div class="info-box info-red"><b>此步驟僅適用於觀察性研究（NRSI）。</b>您的研究為 RCT，請直接選擇「不升級」。</div>'
+    : '';
+
+  contEl.innerHTML = `
+    ${nrsiWarning}
+    <div class="info-box info-blue" style="margin-bottom:12px;">
+      <b>Outcome：</b> ${oc.name} <span class="domain-tag ${oc.importance==='critical'?'danger':'warn'}">${oc.importance==='critical'?'關鍵':'重要'}</span>
+      &nbsp;｜&nbsp; <b>當前確定性（此 domain 前）：</b> <span class="cert-badge ${certCls}">${certLabel}</span>
+    </div>
+    ${opts.map((opt,i) => `
+      <div class="tree-node ${oc.scores[domKey]===opt.val&&i===getSelectedOptIdx(domKey,idx)?'selected':''}" id="opt_${domKey}_${idx}_${i}" onclick="selectDomainOpt('${domKey}',${idx},${i},${opt.val})">
+        <div class="q-title">${opt.lbl}</div>
+        ${opt.detail?`<div class="q-detail">${opt.detail}</div>`:''}
+      </div>
+    `).join('')}
+    <div id="domFeedback_${domKey}_${idx}" style="margin-top:10px;"></div>
+  `;
+  const savedIdx = oc._optIdx && oc._optIdx[domKey] !== undefined ? oc._optIdx[domKey] : null;
+  if(savedIdx !== null) {
+    const el = document.getElementById(`opt_${domKey}_${idx}_${savedIdx}`);
+    if(el) el.classList.add('selected');
+  }
+}
+
+// ═══════════════════════════════════════
+// Imprecision Wizard (6-step guided flow)
+// ═══════════════════════════════════════
+function renderImprecisionWizard(idx) {
+  const contEl = document.getElementById('impContent');
+  const oc = state.outcomes[idx];
+  if(!oc._imp) oc._imp = { thresholdType: null, midExists: null, ciScenario: null, effectBig: null, oisResult: null, plainLang: null };
+  const imp = oc._imp;
+
+  const certBefore = calcCertUpToDomain(idx, 'imp');
+  const certLabel = CERT_LEVELS[Math.max(0, Math.min(3, certBefore))];
+  const certCls = CERT_COLORS[Math.max(0, Math.min(3, certBefore))];
+
+  // ── Step A: Does MID exist? ──
+  const stepA = `
+    <div class="wiz-section" id="impA_${idx}">
+      <div class="wiz-header">Step A：是否存在 MID / MCID？</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.7;">
+        MID（最小重要差異）代表病患感知為重要的最小效果量。<br>
+        若查無文獻、無病患觀點研究、或此 outcome 本質上難以確立 MID → 選擇「無法確立」→ 自動採用 Null 閾值。
+      </div>
+      ${['✅ 有 MID / MCID（文獻或臨床共識支持）', '❌ 無法確立 MID（→ 自動使用 Null 閾值）'].map((lbl,i) => `
+        <div class="tree-node ${imp.midExists===i?'selected':''}" onclick="impSetA(${idx},${i})">
+          <div class="q-title">${lbl}</div>
+          ${i===0?'<div class="q-detail">如：VAS 10mm、FEV₁ 100mL、量表 MID 已有文獻依據</div>':'<div class="q-detail">如：罕見結局、複合指標、難以從病患觀點界定重要性的客觀指標</div>'}
+        </div>
+      `).join('')}
+      ${imp.midExists===0 ? `
+        <div class="info-box info-green" style="margin-top:8px; font-size:12px;">
+          <b>▶ 使用 MID 閾值</b>：評估「效果是否達到臨床重要性？」<br>
+          MID 來源記錄（供報告用）：<input type="text" id="midSrc_${idx}" placeholder="例：BMJ 2020, patient survey n=120, MID=10mm VAS" style="width:100%;margin-top:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;" value="${imp.midSource||''}" oninput="imp_saveMidSrc(${idx},this.value)">
+        </div>` : imp.midExists===1 ? `
+        <div class="info-box info-yellow" style="margin-top:8px; font-size:12px;">
+          <b>▶ 使用 Null 閾值</b>（RD = 0 或 MD = 0）：評估「是否存在真實效果？」<br>
+          注意：Null 閾值仍可提供有意義的確定性評估，但無法判斷效果是否達到臨床重要性。
+        </div>` : ''}
+    </div>`;
+
+  // ── Step B: Threshold is set — now CI assessment ──
+  const threshType = imp.midExists === 0 ? 'MID' : imp.midExists === 1 ? 'Null' : null;
+  const stepB = threshType ? `
+    <div class="wiz-section" id="impB_${idx}" style="margin-top:12px;">
+      <div class="wiz-header">Step B：點估計（Point Estimate）位置</div>
+      <div class="info-box info-blue" style="font-size:12px; margin-bottom:10px;">
+        使用閾值：<b>${threshType === 'MID' ? 'MID 閾值' : 'Null 閾值（RD/MD = 0）'}</b><br>
+        請對照您文獻的 forest plot 或 meta-analysis 結果描述點估計位置。
+      </div>
+      ${[
+        {lbl: '點估計遠超 MID／遠離 Null（效果明確且大）', detail: '效果方向明確，點估計清楚在閾值有利側'},
+        {lbl: '點估計超過 MID，但接近 MID 邊緣', detail: '效果方向支持，但量級接近臨床重要性邊界'},
+        {lbl: '點估計介於 Null 與 MID 之間', detail: '效果可能存在但量級可能不達臨床重要性'},
+        {lbl: '點估計極接近 Null 或在 Null 附近', detail: '效果方向不明或效果量極小'},
+      ].map((o,i) => `
+        <div class="tree-node ${imp.pePos===i?'selected':''}" onclick="impSetPE(${idx},${i})">
+          <div class="q-title">${o.lbl}</div>
+          <div class="q-detail">${o.detail}</div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  // ── Step C: CI crosses threshold? ──
+  const stepC = (threshType && imp.pePos !== null && imp.pePos !== undefined) ? `
+    <div class="wiz-section" id="impC_${idx}" style="margin-top:12px;">
+      <div class="wiz-header">Step C：95% CI 是否跨越閾值？</div>
+      <div class="info-box info-blue" style="font-size:12px; margin-bottom:10px;">
+        請確認 95% CI 的兩端（下界與上界）與閾值（${threshType === 'MID' ? 'MID' : 'Null = 0'}）的相對位置。
+      </div>
+      ${[
+        {lbl: 'CI 完全在閾值有利側，未跨越任一閾值', detail: '→ 情境 (a)：證據明確支持效果方向'},
+        {lbl: 'CI 跨越 MID，但未跨越 Null', detail: '→ 情境 (b)：效果可能存在但不確定是否重要（僅 MID 閾值需降級）'},
+        {lbl: 'CI 跨越 Null（含一側 MID）', detail: '→ 情境 (c)：效果是否存在尚不確定 → 降一級'},
+        {lbl: 'CI 極寬，同時跨越 MID for benefit 與 MID for harm（兩端）', detail: '→ 情境 (d)：效果方向完全不確定 → 考慮降兩級'},
+      ].map((o,i) => `
+        <div class="tree-node ${imp.ciScenario===i?'selected':''}" onclick="impSetCI(${idx},${i})">
+          <div class="q-title">${o.lbl}</div>
+          <div class="q-detail">${o.detail}</div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  // ── Derive preliminary decision from A+B+C ──
+  let prelimDecision = null; // 0 = no downgrade, -1 = down 1, -2 = down 2
+  let prelimReason = '';
+  if (threshType && imp.pePos !== null && imp.pePos !== undefined && imp.ciScenario !== null && imp.ciScenario !== undefined) {
+    const ci = imp.ciScenario;
+    if (ci === 0) { prelimDecision = 0; prelimReason = 'CI 未跨越閾值 → 不需因不精確性降級（進入 OIS 檢查）'; }
+    else if (ci === 1) {
+      prelimDecision = threshType === 'MID' ? -1 : 0;
+      prelimReason = threshType === 'MID'
+        ? 'CI 跨越 MID 閾值 → 使用 MID 閾值須降一級'
+        : 'CI 跨越 MID 但未跨 Null → 使用 Null 閾值不降級';
+    }
+    else if (ci === 2) { prelimDecision = -1; prelimReason = 'CI 跨越 Null → 效果是否存在不確定 → 降一級'; }
+    else if (ci === 3) { prelimDecision = -2; prelimReason = 'CI 同時跨越效益與危害兩端 MID → 考慮降兩級'; }
+  }
+
+  // ── Step D: OIS check (only when no downgrade from CI, but effect is big) ──
+  const stepD = (prelimDecision === 0 && imp.ciScenario !== null && imp.ciScenario !== undefined) ? `
+    <div class="wiz-section" id="impD_${idx}" style="margin-top:12px;">
+      <div class="wiz-header">Step D：效果量是否「異常大」？（OIS 觸發判斷）</div>
+      <div class="info-box info-yellow" style="font-size:12px; margin-bottom:10px;">
+        CI 未跨越閾值時，若效果量異常大 → 仍需評估樣本數是否充足（OIS）。<br>
+        早期小型研究的大效果往往無法在後續複製（regression to the mean）。
+      </div>
+      ${[
+        {lbl: '效果量中等或普通（RR reduction ≤ 30%，或連續結果效果量不大）', detail: '→ 不需進行 OIS 評估 → 不降級'},
+        {lbl: '效果量大（RR reduction > 30–40%，或連續結果效果量明顯大）', detail: '→ 需進行 OIS / 樣本數充足性評估'},
+      ].map((o,i) => `
+        <div class="tree-node ${imp.effectBig===i?'selected':''}" onclick="impSetEffect(${idx},${i})">
+          <div class="q-title">${o.lbl}</div>
+          <div class="q-detail">${o.detail}</div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  // ── Step E: OIS result ──
+  const stepE = (prelimDecision === 0 && imp.effectBig === 1) ? `
+    <div class="wiz-section" id="impE_${idx}" style="margin-top:12px;">
+      <div class="wiz-header">Step E：OIS（最適資訊量）評估結果</div>
+      <div class="info-box info-blue" style="font-size:12px; margin-bottom:10px;">
+        <b>OIS 計算參數（二元結果）：</b> α = 0.05，β = 0.20，control event rate，RRR 設 20–25%<br>
+        <b>連續結果簡化規則：</b> 每組 ≥ 400 人（共 ≥ 800）可視為充足<br>
+        <b>計算工具：</b> <a href="https://www.openepi.com/SampleSize/SSCohort.htm" target="_blank" style="color:var(--accent);">OpenEpi.com ↗</a>
+      </div>
+      ${[
+        {lbl: '實際 N ≥ OIS（或連續結果共 ≥ 800 人）', detail: '→ 樣本數充足 → 不降級'},
+        {lbl: '30% OIS < 實際 N < OIS', detail: '→ 樣本數不足 → 降一級'},
+        {lbl: '實際 N ≤ 30% OIS', detail: '→ 樣本數嚴重不足 → 考慮降兩級'},
+        {lbl: 'RR CI ratio ≥ 3 或 OR CI ratio ≥ 2.5（大效果但 CI 極寬）', detail: '→ 效果大但非常不精確 → 考慮降兩級（可進一步計算 OIS 確認）'},
+        {lbl: '無法計算 OIS（缺乏必要參數）', detail: '→ 保守判斷：降一級'},
+      ].map((o,i) => `
+        <div class="tree-node ${imp.oisResult===i?'selected':''}" onclick="impSetOIS(${idx},${i})">
+          <div class="q-title">${o.lbl}</div>
+          <div class="q-detail">${o.detail}</div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  // ── Step F: Plain language check ──
+  const allAnswered = threshType &&
+    imp.pePos !== null && imp.pePos !== undefined &&
+    imp.ciScenario !== null && imp.ciScenario !== undefined &&
+    (prelimDecision !== 0 || imp.effectBig === 0 || imp.oisResult !== null);
+
+  const finalDelta = computeImpFinalDelta(imp, prelimDecision);
+
+  const stepF = allAnswered ? `
+    <div class="wiz-section" id="impF_${idx}" style="margin-top:12px; border:1px solid var(--accent); border-radius:10px; padding:14px;">
+      <div class="wiz-header" style="color:var(--accent);">Step F：Plain Language 複查（自動驗證）</div>
+      ${buildImpPlainLangCheck(idx, finalDelta, threshType)}
+    </div>` : '';
+
+  contEl.innerHTML = `
+    <div class="info-box info-blue" style="margin-bottom:14px;">
+      <b>Outcome：</b> ${oc.name}
+      <span class="domain-tag ${oc.importance==='critical'?'danger':'warn'}">${oc.importance==='critical'?'關鍵':'重要'}</span>
+      &nbsp;｜&nbsp; <b>當前確定性（此 domain 前）：</b> <span class="cert-badge ${certCls}">${certLabel}</span>
+    </div>
+    <style>
+      .wiz-section { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+      .wiz-header { font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    </style>
+    ${stepA}${stepB}${stepC}
+    ${prelimDecision !== null && prelimDecision !== undefined && prelimDecision !== 0 ? `
+      <div class="info-box info-yellow" style="margin-top:12px; font-size:13px;">
+        <b>初步判斷（CI 評估）：</b> ${prelimDecision === -1 ? '⬇ 降一級' : '⬇⬇ 考慮降兩級'}<br>
+        <small>${prelimReason}</small>
+      </div>` : ''}
+    ${stepD}${stepE}${stepF}
+    <div id="impFeedback_${idx}" style="margin-top:10px;"></div>
+  `;
+}
+
+function imp_saveMidSrc(idx, val) {
+  if(!state.outcomes[idx]._imp) state.outcomes[idx]._imp = {};
+  state.outcomes[idx]._imp.midSource = val;
+}
+
+function impSetA(idx, val) {
+  if(!state.outcomes[idx]._imp) state.outcomes[idx]._imp = {};
+  const prev = state.outcomes[idx]._imp.midExists;
+  state.outcomes[idx]._imp.midExists = val;
+  // reset downstream if threshold type changed
+  if(prev !== val) {
+    state.outcomes[idx]._imp.pePos = null;
+    state.outcomes[idx]._imp.ciScenario = null;
+    state.outcomes[idx]._imp.effectBig = null;
+    state.outcomes[idx]._imp.oisResult = null;
+  }
+  renderImprecisionWizard(idx);
+}
+function impSetPE(idx, val) {
+  state.outcomes[idx]._imp.pePos = val;
+  state.outcomes[idx]._imp.ciScenario = null;
+  state.outcomes[idx]._imp.effectBig = null;
+  state.outcomes[idx]._imp.oisResult = null;
+  renderImprecisionWizard(idx);
+}
+function impSetCI(idx, val) {
+  state.outcomes[idx]._imp.ciScenario = val;
+  state.outcomes[idx]._imp.effectBig = null;
+  state.outcomes[idx]._imp.oisResult = null;
+  renderImprecisionWizard(idx);
+  impAutoCommit(idx);
+}
+function impSetEffect(idx, val) {
+  state.outcomes[idx]._imp.effectBig = val;
+  state.outcomes[idx]._imp.oisResult = null;
+  renderImprecisionWizard(idx);
+  if(val === 0) impAutoCommit(idx); // no OIS needed
+}
+function impSetOIS(idx, val) {
+  state.outcomes[idx]._imp.oisResult = val;
+  renderImprecisionWizard(idx);
+  impAutoCommit(idx);
+}
+
+function computeImpFinalDelta(imp, prelimDecision) {
+  if(prelimDecision === null || prelimDecision === undefined) return null;
+  if(prelimDecision !== 0) return prelimDecision; // CI already determined downgrade
+  // CI OK — check OIS
+  if(imp.effectBig === 0) return 0; // effect not big, no OIS needed
+  if(imp.effectBig === 1 && imp.oisResult !== null && imp.oisResult !== undefined) {
+    if(imp.oisResult === 0) return 0;  // N >= OIS
+    if(imp.oisResult === 1) return -1; // 30%OIS < N < OIS
+    if(imp.oisResult === 2) return -2; // N <= 30%OIS
+    if(imp.oisResult === 3) return -2; // CI ratio too wide
+    if(imp.oisResult === 4) return -1; // cannot calculate
+  }
+  return null; // incomplete
+}
+
+function buildImpPlainLangCheck(idx, finalDelta, threshType) {
+  const certBefore = calcCertUpToDomain(idx, 'imp');
+  const certAfter = Math.max(0, Math.min(3, certBefore + (finalDelta || 0)));
+  const plLabels = ['very uncertain (Very Low)', 'may (Low)', 'probably/likely (Moderate)', 'certain (High)'];
+  const pl = plLabels[certAfter];
+
+  const deltaText = finalDelta === 0 ? '✅ 不降級' : finalDelta === -1 ? '⬇ 降一級' : '⬇⬇ 降兩級';
+  const certFinal = CERT_LEVELS[certAfter];
+  const certFinalCls = CERT_COLORS[certAfter];
+
+  return `
+    <div style="margin-bottom:10px;">
+      <b>最終降級決策：</b> ${deltaText}<br>
+      <b>不精確性後確定性：</b> <span class="cert-badge ${certFinalCls}">${certFinal}</span>
+    </div>
+    <div class="info-box info-green" style="font-size:12px;">
+      <b>Plain Language 驗證：</b> 根據確定性等級，此 outcome 的陳述應使用 <b>${pl}</b><br>
+      ${certAfter === 2 ? '✅ <b>"probably"/"likely"</b> → 對應 Moderate 確定性，確認合理' : ''}
+      ${certAfter === 1 ? '✅ <b>"may"</b> → 對應 Low 確定性，確認合理' : ''}
+      ${certAfter === 3 ? '✅ 直接陳述效果，無需限定詞 → 對應 High 確定性' : ''}
+      ${certAfter === 0 ? '✅ <b>"very uncertain"</b> → 對應 Very Low 確定性' : ''}
+    </div>
+    <div style="margin-top:10px; font-size:12px; color:var(--muted);">
+      使用閾值：${threshType === 'MID' ? 'MID 閾值（評估效果是否達臨床重要性）' : 'Null 閾值（評估效果是否存在）'}
+    </div>
+    <button class="btn btn-primary" style="margin-top:12px; width:100%;" onclick="impCommit(${idx}, ${finalDelta})">✅ 確認此 Outcome 不精確性評分</button>
+  `;
+}
+
+function impAutoCommit(idx) {
+  const imp = state.outcomes[idx]._imp;
+  const threshType = imp.midExists === 0 ? 'MID' : imp.midExists === 1 ? 'Null' : null;
+  if(!threshType) return;
+
+  let prelimDecision = null;
+  if(imp.ciScenario !== null && imp.ciScenario !== undefined) {
+    const ci = imp.ciScenario;
+    if(ci === 0) prelimDecision = 0;
+    else if(ci === 1) prelimDecision = threshType === 'MID' ? -1 : 0;
+    else if(ci === 2) prelimDecision = -1;
+    else if(ci === 3) prelimDecision = -2;
+  }
+  const finalDelta = computeImpFinalDelta(imp, prelimDecision);
+  if(finalDelta !== null) impCommit(idx, finalDelta);
+}
+
+function impCommit(idx, delta) {
+  const oc = state.outcomes[idx];
+  oc.scores['imp'] = delta;
+  if(!oc._optIdx) oc._optIdx = {};
+  oc._optIdx['imp'] = delta; // store for reference
+
+  const certAfter = calcCertForOutcome(idx);
+  const cl = CERT_LEVELS[Math.max(0,Math.min(3,certAfter))];
+  const cc = CERT_COLORS[Math.max(0,Math.min(3,certAfter))];
+
+  const fb = document.getElementById(`impFeedback_${idx}`);
+  if(fb) fb.innerHTML = `<div class="info-box info-green" style="margin-top:8px;">✅ 不精確性評分已記錄（${delta===0?'不降級':delta===-1?'降一級':'降兩級'}）| 此 Outcome 目前確定性：<span class="cert-badge ${cc}">${cl}</span></div>`;
+
+  const t = document.getElementById(`tab_imp_${idx}`);
+  if(t) {
+    t.classList.add('rated');
+    if(!t.textContent.includes('✓')) t.textContent = t.textContent.trim() + ' ✓';
+  }
+
+  updateSideScore();
+}
+
+function getSelectedOptIdx(domKey, outcomeIdx) {
+  const oc = state.outcomes[outcomeIdx];
+  return oc._optIdx && oc._optIdx[domKey] !== undefined ? oc._optIdx[domKey] : -1;
+}
+
+function selectDomainOpt(domKey, outcomeIdx, optIdx, val) {
+  if(domKey === 'imp') return; // handled by wizard
+  const oc = state.outcomes[outcomeIdx];
+  // handle upgrade: val may not be unique
+  const opts = DOMAIN_OPTS[domKey];
+  // for up domain, take optIdx value
+  const actualVal = domKey==='up' ? (optIdx===0?0 : optIdx===1?1 : optIdx===2?2 : 1) : val;
+  oc.scores[domKey] = actualVal;
+  if(!oc._optIdx) oc._optIdx = {};
+  oc._optIdx[domKey] = optIdx;
+
+  // highlight
+  opts.forEach((_,i) => {
+    const el = document.getElementById(`opt_${domKey}_${outcomeIdx}_${i}`);
+    if(el) el.classList.toggle('selected', i===optIdx);
+  });
+
+  // feedback
+  const certAfter = calcCertForOutcome(outcomeIdx);
+  const cl = CERT_LEVELS[Math.max(0,Math.min(3,certAfter))];
+  const cc = CERT_COLORS[Math.max(0,Math.min(3,certAfter))];
+  const fb = document.getElementById(`domFeedback_${domKey}_${outcomeIdx}`);
+  if(fb) fb.innerHTML = `<div class="info-box info-green">✅ 已記錄 | 此 Outcome 目前確定性：<span class="cert-badge ${cc}">${cl}</span></div>`;
+
+  // update tab style and label
+  const t = document.getElementById(`tab_${domKey}_${outcomeIdx}`);
+  if(t) {
+    t.classList.add('rated');
+    if(!t.textContent.includes('✓')) t.textContent = t.textContent.trim() + ' ✓';
+  }
+
+  updateSideScore();
+}
+
+function calcCertUpToDomain(outcomeIdx, stopDomain) {
+  const oc = state.outcomes[outcomeIdx];
+  let c = state.baseCert !== undefined ? state.baseCert : 3;
+  const order = ['rob','inc','ind','imp','pub','up'];
+  for(const k of order) {
+    if(k === stopDomain) break;
+    const v = oc.scores[k] || 0;
+    if(k==='up') c = Math.min(3, c + v);
+    else c = Math.max(0, c + v);
+  }
+  return c;
+}
+
+function calcCertForOutcome(outcomeIdx) {
+  const oc = state.outcomes[outcomeIdx];
+  let c = state.baseCert !== undefined ? state.baseCert : 3;
+  DOMAIN_KEYS.forEach(k => {
+    const v = oc.scores[k] || 0;
+    if(k==='up') c = Math.min(3, c + v);
+    else c = Math.max(0, c + v);
+  });
+  return Math.max(0, Math.min(3, c));
+}
+
+function updateSideScore() {
+  const el = document.getElementById('sideScore');
+  if(!state.outcomes.length) { el.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:4px;">尚無 Outcomes</p>'; return; }
+  el.innerHTML = state.outcomes.map(o => {
+    const c = calcCertForOutcome(state.outcomes.indexOf(o));
+    const cl = CERT_LEVELS[Math.max(0,Math.min(3,c))];
+    const cc = CERT_COLORS[Math.max(0,Math.min(3,c))];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;border-bottom:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.name}</span>
+      <span class="cert-badge ${cc}" style="font-size:11px;margin-left:4px;">${cl}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// Step 8: Summary
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// Summary navigation with completion check
+// ═══════════════════════════════════════
+function navToSummary() {
+  if(!state.design) {
+    alert('請先完成「第一步：研究設計起始分」再查看結果總表。');
+    goStep(0); return;
+  }
+  if(!state.outcomes.length) {
+    alert('請先在「第二步」新增至少一個 Outcome 再查看結果總表。');
+    goStep(1); return;
+  }
+  // Check each outcome has rated all non-up domains (imp treated specially)
+  const domainSteps = ['rob','inc','ind','imp','pub','up'];
+  const incomplete = [];
+  state.outcomes.forEach(o => {
+    const unrated = domainSteps.filter(k => {
+      if(k === 'imp') {
+        // imp is rated when scores['imp'] has been explicitly set by impCommit
+        return o._optIdx === undefined || o._optIdx['imp'] === undefined;
+      }
+      if(k === 'up' && state.design !== 'nrsi') return false; // skip for RCT/case
+      return o._optIdx === undefined || o._optIdx[k] === undefined;
+    });
+    if(unrated.length > 0) {
+      const domainNames = { rob:'偏誤風險', inc:'不一致性', ind:'間接性', imp:'不精確性', pub:'發表偏誤', up:'升級考量' };
+      incomplete.push(`【${o.name}】尚未完成：${unrated.map(k=>domainNames[k]).join('、')}`);
+    }
+  });
+  if(incomplete.length > 0) {
+    const msg = '以下 Outcome 尚有未評分項目：\n\n' + incomplete.join('\n') + '\n\n是否仍要查看目前的結果（部分評分可能顯示為 0）？';
+    if(!confirm(msg)) return;
+  }
+  buildSummary();
+  goStep(8);
+}
+
+function buildSummary() {
+  const el = document.getElementById('summaryTable');
+  const criticals = state.outcomes.filter(o=>o.importance==='critical');
+  const importants = state.outcomes.filter(o=>o.importance==='important');
+
+  const renderRow = (o) => {
+    const base = state.baseCert !== undefined ? state.baseCert : 3;
+    const designLbl = ['Very Low','Low','Low','High'][base];
+    let running = base;
+    let steps = `<span class="cert-badge ${CERT_COLORS[base]}">${designLbl}（起始）</span>`;
+    const deltas = { rob:'偏誤風險', inc:'不一致性', ind:'間接性', imp:'不精確性', pub:'發表偏誤', up:'升級' };
+    DOMAIN_KEYS.forEach(k => {
+      const v = o.scores[k] || 0;
+      if(v !== 0) {
+        if(k==='up') running = Math.min(3, running + v);
+        else running = Math.max(0, running + v);
+        const arrow = v > 0 ? '⬆' : v===-1 ? '⬇' : '⬇⬇';
+        steps += ` → ${arrow} ${deltas[k]}`;
+        steps += ` <span class="cert-badge ${CERT_COLORS[Math.max(0,Math.min(3,running))]}">${CERT_LEVELS[Math.max(0,Math.min(3,running))]}</span>`;
+      }
+    });
+    const final = calcCertForOutcome(state.outcomes.indexOf(o));
+    const fc = CERT_COLORS[Math.max(0,Math.min(3,final))];
+    const fl = CERT_LEVELS[Math.max(0,Math.min(3,final))];
+    return `
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:16px;">${o.importance==='critical'?'🔴':'🟡'}</span>
+          <span style="font-weight:700;font-size:15px;">${o.name}</span>
+          <span class="domain-tag ${o.importance==='critical'?'danger':'warn'}">${o.importance==='critical'?'關鍵 Critical':'重要 Important'}</span>
+          <span class="cert-badge ${fc}" style="margin-left:auto;">${fl}</span>
+        </div>
+        <div style="font-size:12px; color:var(--muted); line-height:2;">${steps}</div>
+        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+          ${DOMAIN_KEYS.map(k => {
+            const v = o.scores[k]||0;
+            const tag = v===0 ? '不降/不升' : k==='up' ? `+${v} 升級` : `${v} 降`;
+            const cls = v===0 ? '' : k==='up' ? 'boost' : v===-1 ? 'warn' : 'danger';
+            let extra = '';
+            if(k==='imp' && o._imp) {
+              const imp = o._imp;
+              const thr = imp.midExists===0?'MID閾值':imp.midExists===1?'Null閾值':'—';
+              extra = ` <small style="color:var(--muted);">[${thr}${imp.effectBig===1?' + OIS':''}]</small>`;
+            }
+            return `<span class="domain-tag ${cls}">${DOMAIN_LABELS[DOMAIN_KEYS.indexOf(k)]}：${tag}${extra}</span>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  };
+
+  let html = '';
+  if(criticals.length) {
+    html += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">🔴 關鍵 Outcomes</div>`;
+    html += criticals.map(renderRow).join('');
+  }
+  if(importants.length) {
+    html += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-top:16px;margin-bottom:8px;">🟡 重要 Outcomes</div>`;
+    html += importants.map(renderRow).join('');
+  }
+  el.innerHTML = html;
+
+  // Overall cert
+  const overallCard = document.getElementById('overallCard');
+  const overallEl = document.getElementById('overallResult');
+  if(criticals.length) {
+    const minCrit = Math.min(...criticals.map(o => calcCertForOutcome(state.outcomes.indexOf(o))));
+    const oc = CERT_COLORS[Math.max(0,Math.min(3,minCrit))];
+    const ol = CERT_LEVELS[Math.max(0,Math.min(3,minCrit))];
+    overallEl.innerHTML = `
+      <div class="final-cert final-${ol.toLowerCase().replace(' ','')}">
+        <div class="cert-level">${ol.toUpperCase()}</div>
+        <div class="cert-sub">${['⬤◯◯◯','⬤⬤◯◯','⬤⬤⬤◯','⬤⬤⬤⬤'][minCrit]}</div>
+        <div class="cert-desc">${['效果極不確定，任何估計均非常不確定','信心有限，真實效果可能有實質差異','中等信心，真實效果可能接近估計值','非常有信心，估計值接近真實效果'][minCrit]}</div>
+      </div>`;
+    overallCard.style.display = '';
+  }
+
+  // Plain language
+  buildPlainLang();
+  updateSideScore();
+}
+
+function buildPlainLang() {
+  const el = document.getElementById('plainLang');
+  const modifiers = ['the effect is very uncertain', 'may', 'probably', ''];
+  el.innerHTML = state.outcomes.map(o => {
+    const c = calcCertForOutcome(state.outcomes.indexOf(o));
+    const m = modifiers[c];
+    const isCrit = o.importance==='critical';
+    const template = c===3 ? `The intervention <b>has an important effect</b> on <i>${o.name}</i>.`
+      : c===2 ? `The intervention <b>probably has an important effect</b> on <i>${o.name}</i>.`
+      : c===1 ? `The intervention <b>may have an effect</b> on <i>${o.name}</i>.`
+      : `The effect of the intervention on <i>${o.name}</i> is <b>very uncertain</b>.`;
+    return `<div class="domain-row">
+      <span>${isCrit?'🔴':'🟡'}</span>
+      <span style="flex:1;font-size:13px;">${template}</span>
+      <span class="cert-badge ${CERT_COLORS[c]}">${CERT_LEVELS[c]}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// Export
+// ═══════════════════════════════════════
+function exportResult() {
+  if(!state.design) { alert('請先選擇研究設計（第一步）再匯出。'); return; }
+  if(!state.outcomes.length) { alert('請先新增至少一個 Outcome（第二步）再匯出。'); return; }
+
+  const SEP = '='.repeat(44);
+  const design = {rct:'RCT（起始 High）',nrsi:'NRSI / 觀察性（起始 Low）',case:'病例系列（起始 Very Low）'}[state.design] || '未選擇';
+  const now = new Date();
+  const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+
+  const lines = [];
+  lines.push('Core GRADE 證據確定性評分報告');
+  lines.push(SEP);
+  lines.push('匯出日期：' + dateStr);
+  lines.push('研究設計：' + design);
+  lines.push(SEP);
+  lines.push('');
+
+  // Per-outcome detail
+  state.outcomes.forEach((o, i) => {
+    const cidx = Math.max(0, Math.min(3, calcCertForOutcome(i)));
+    const base = Math.max(0, Math.min(3, state.baseCert !== undefined ? state.baseCert : 3));
+    lines.push('Outcome ' + (i+1) + '：' + o.name);
+    lines.push('  重要性分類：' + (o.importance === 'critical' ? '關鍵 Critical (7-9分)' : '重要 Important (4-6分)'));
+    lines.push('  起始確定性：' + CERT_LEVELS[base]);
+    lines.push('');
+    lines.push('  --- 各 Domain 評分 ---');
+    DOMAIN_KEYS.forEach((k, ki) => {
+      const v = o.scores[k] || 0;
+      let adj = '不調整 (0)';
+      if(k === 'up') {
+        if(v === 1) adj = '+1 升一級';
+        else if(v === 2) adj = '+2 升兩級';
+      } else {
+        if(v === -1) adj = '-1 降一級（嚴重）';
+        else if(v === -2) adj = '-2 降兩級（非常嚴重）';
+      }
+      lines.push('  ' + DOMAIN_LABELS[ki] + '：' + adj);
+      // Extra detail for imprecision wizard
+      if(k === 'imp' && o._imp) {
+        const imp = o._imp;
+        const threshNames = ['MID 閾值', 'Null 閾值'];
+        const thresh = imp.midExists !== null && imp.midExists !== undefined ? threshNames[imp.midExists] : '未選擇';
+        lines.push('    閾值類型：' + thresh);
+        if(imp.midExists === 0 && imp.midSource) lines.push('    MID 來源：' + imp.midSource);
+        const ciNames = ['CI 未跨越閾值 (a)','CI 跨越 MID 未跨 Null (b)','CI 跨越 Null (c)','CI 跨越兩端 MID (d)'];
+        if(imp.ciScenario !== null && imp.ciScenario !== undefined) lines.push('    CI 情境：' + ciNames[imp.ciScenario]);
+        if(imp.effectBig !== null && imp.effectBig !== undefined) lines.push('    效果量大（OIS 觸發）：' + (imp.effectBig === 1 ? '是 → 進行 OIS 評估' : '否'));
+        if(imp.oisResult !== null && imp.oisResult !== undefined) {
+          const oisNames = ['N ≥ OIS（充足）','30%OIS<N<OIS（不足）','N ≤ 30%OIS（嚴重不足）','CI ratio 過寬','無法計算'];
+          lines.push('    OIS 結果：' + oisNames[imp.oisResult]);
+        }
+      }
+    });
+    lines.push('');
+    lines.push('  >>> 最終確定性：' + CERT_LEVELS[cidx] + ' ' + ['(Very Low) 效果極不確定','(Low) 信心有限','(Moderate) 中等信心','(High) 高度信心'][cidx]);
+    lines.push('');
+    lines.push('-'.repeat(40));
+    lines.push('');
+  });
+
+  // Overall
+  const criticals = state.outcomes.filter(o => o.importance === 'critical');
+  if(criticals.length) {
+    const minIdx = Math.min(...criticals.map(o => Math.max(0, Math.min(3, calcCertForOutcome(state.outcomes.indexOf(o))))));
+    lines.push(SEP);
+    lines.push('整體確定性（關鍵 Outcomes 中最低）');
+    lines.push('  >>> ' + CERT_LEVELS[minIdx]);
+    lines.push('  判斷依據：共 ' + criticals.length + ' 個關鍵 Outcome，取最低確定性等級');
+    lines.push(SEP);
+  }
+
+  lines.push('');
+  lines.push('Plain Language Summary');
+  lines.push('-'.repeat(40));
+  state.outcomes.forEach((o, i) => {
+    const c = Math.max(0, Math.min(3, calcCertForOutcome(i)));
+    const stmt = [
+      'The effect of the intervention on ' + o.name + ' is very uncertain.',
+      'The intervention may have an effect on ' + o.name + '.',
+      'The intervention probably has an important effect on ' + o.name + '.',
+      'The intervention has an important effect on ' + o.name + '.'
+    ][c];
+    lines.push('  [' + CERT_LEVELS[c] + '] ' + stmt);
+  });
+  lines.push('');
+  lines.push('--- 本報告依據 Guyatt et al., BMJ 2025 Core GRADE 系列 ---');
+
+  const content = lines.join('\r\n');
+
+  // Use data URI with base64 to avoid createObjectURL CSP issues
+  try {
+    // Try data URI approach first (works in most environments)
+    const encoded = encodeURIComponent(content);
+    const dataUri = 'data:text/plain;charset=utf-8,' + encoded;
+    const a = document.createElement('a');
+    a.href = dataUri;
+    a.download = 'GRADE_評分報告_' + dateStr.replace(/\//g,'-') + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch(e) {
+    // Fallback: open in new window for manual save
+    const w = window.open('', '_blank');
+    if(w) {
+      w.document.write('<pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + content.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>');
+      w.document.title = 'GRADE 評分報告';
+      w.document.close();
+    } else {
+      // Last resort: show in modal
+      showExportModal(content);
+    }
+  }
+}
+
+function showExportModal(content) {
+  // Remove existing modal if any
+  const existing = document.getElementById('exportModal');
+  if(existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'exportModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#1a1d27;border:1px solid #2e3352;border-radius:12px;max-width:700px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid #2e3352;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:700;color:#e8eaf0;">📋 評分報告（請全選複製）</span>
+        <button onclick="document.getElementById('exportModal').remove()" style="background:#e74c3c;border:none;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;">✕ 關閉</button>
+      </div>
+      <textarea readonly style="flex:1;background:#0f1117;color:#e8eaf0;border:none;padding:16px;font-family:monospace;font-size:12px;line-height:1.6;resize:none;overflow-y:auto;" onclick="this.select()">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+      <div style="padding:10px 16px;border-top:1px solid #2e3352;font-size:12px;color:#8891b4;">點擊文字框後 Ctrl+A 全選，再 Ctrl+C 複製</div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Auto-select textarea
+  setTimeout(() => { const ta = modal.querySelector('textarea'); if(ta) ta.select(); }, 100);
+}
+
+function resetAll() {
+  if(!confirm('確定要清除所有評分資料並重新開始？')) return;
+
+  // Reset state completely
+  state = {
+    design: null,
+    baseCert: undefined,
+    outcomes: [],
+    currentOutcomeIdx: 0,
+    currentStep: -1,
+    completed: new Set(),
+    _lastDomainIdx: {}
+  };
+
+  // Step 0: design selection
+  ['d_rct','d_nrsi','d_case'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('selected');
+  });
+  const fb = document.getElementById('designFeedback');
+  if(fb) fb.innerHTML = '';
+  const btn0 = document.getElementById('btn0next');
+  if(btn0) btn0.disabled = true;
+
+  // Step 1: outcomes
+  const ol = document.getElementById('outcomeList');
+  if(ol) ol.innerHTML = '<p style="color:var(--muted); font-size:13px;">尚未新增任何 Outcome</p>';
+  const btn1 = document.getElementById('btn1next');
+  if(btn1) btn1.disabled = true;
+
+  // Domain steps: clear all tabs and content
+  ['rob','inc','ind','imp','pub','up'].forEach(k => {
+    const info = DOMAIN_INFO[k];
+    if(!info) return;
+    const tabs = document.getElementById(info.tabId);
+    const cont = document.getElementById(info.contentId);
+    if(tabs) tabs.innerHTML = '';
+    if(cont) cont.innerHTML = '';
+  });
+
+  // Step 8: summary page
+  const sumTable = document.getElementById('summaryTable');
+  if(sumTable) sumTable.innerHTML = '';
+  const overallCard = document.getElementById('overallCard');
+  if(overallCard) { overallCard.style.display = 'none'; }
+  const overallResult = document.getElementById('overallResult');
+  if(overallResult) overallResult.innerHTML = '';
+  const plainLang = document.getElementById('plainLang');
+  if(plainLang) plainLang.innerHTML = '';
+
+  // Navigate to overview
+  goStep(-1);
+  updateSideScore();
+}
+
+// Init
+goStep(-1);
+updateSideScore();
+
+
+
+
+
+
+
+
+
+
+
+// ═══════════════════════════════════════
+// Reference material modal (replaces PDF embedding)
+// ═══════════════════════════════════════
+const REF_CONTENT = {
+  overview1: `<div class="pdf-html-content">
+<div class="ph-header">
+  <div class="ph-doi">BMJ 2025;389:e081903 | doi: 10.1136/bmj-2024-081903 | Accepted: 14 March 2025</div>
+  <div class="ph-series">研究方法與報告（Research Methods and Reporting）｜七篇系列第一篇</div>
+  <h1>Core GRADE 1：Core GRADE 方法概述</h1>
+  <div class="ph-en-title">Core GRADE 1: Overview of the Core GRADE Approach</div>
+  <div class="ph-authors">作者：Gordon Guyatt, Thomas Agoritsas 等（共 22 位）　麥克馬斯特大學（McMaster University）、日內瓦大學醫院、WHO MAGIC Foundation 等</div>
+</div>
+
+<div class="ph-box ph-box-summary">
+  <h3>重點摘要（Summary Points）</h3>
+  <ul>
+    <li>Core GRADE 提供比較單一介入措施與單一比較物的指引</li>
+    <li>Core GRADE 主要採取個別患者而非族群或公共衛生的視角</li>
+    <li>Core GRADE 涉及兩個基本過程：(1) 針對摘要結果表中每個重要結局判斷證據確定性，以及 (2) 從證據移轉至具有方向（贊成或反對）和強度（強或條件性/弱）的建議</li>
+    <li>GRADE 方法的第一步是使用 PICO（族群、介入措施、比較物、結局）格式明確定義問題，並考慮患者群體中相對效應和基線風險差異的可能性，以進一步細化問題</li>
+  </ul>
+</div>
+
+<h2>一、GRADE 方法概述（The GRADE Approach）</h2>
+<p>Core GRADE（Grading of Recommendations Assessment, Development and Evaluation，建議評估、發展與評價分級系統）適用於系統性回顧的設計、執行和分析，以及其結果在臨床實踐指引或衛生技術評估中從證據移轉至決策的應用。</p>
+<p>Core GRADE 的整體流程分為兩個主要部分：</p>
+<ul>
+  <li><b>左側面板（系統性回顧過程）</b>：使用 PICO 格式定義回顧問題 → 識別和評估每個結局的重要性 → 整合和總結證據 → 評估每個結局的證據確定性（品質） → 呈現摘要結果表</li>
+  <li><b>右側面板（指引制定或衛生技術評估過程）</b>：指引小組或決策群組考量效益的大小、傷害和負擔、證據確定性，以及患者或公眾的價值觀和偏好；決策者也可考慮費用、可行性、可接受性和公平性，得出贊成或反對介入措施的建議方向，並進一步規定為強建議或條件性（弱）建議</li>
+</ul>
+
+<h2>二、問題的制定（Formulating the Question）</h2>
+<p>所有 GRADE 的應用，無論是系統性回顧、衛生技術評估報告或臨床實踐指引，都從使用結構化流程識別臨床問題開始，以明確說明相關族群、介入措施、比較物，以及對患者可能重要的結局——即目標 PICO。</p>
+<p>Core GRADE 的最佳應用需要仔細考慮 PICO 每個要素的制定，盡可能具體，避免歧義。在過去，GRADE 使用者在制定目標 PICO 時往往缺乏精確性——仔細、明確、透明地說明目標 PICO 是 Core GRADE 的關鍵方面。</p>
+<ul>
+  <li><b>族群（Population）</b>：必須盡可能精確地定義目標族群。制定 PICO 時應思考若各試驗的入選標準與共識定義不同，差異越大，則引入「間接性（indirectness）」的可能性越高</li>
+  <li><b>介入措施（Intervention）和比較物（Comparison）</b>：應明確說明具體介入措施和比較物的細節（如劑量、給藥途徑、持續時間等）</li>
+  <li><b>結局（Outcomes）</b>：識別所有對患者可能重要的結局，並評估其重要性</li>
+</ul>
+
+<h2>三、結局重要性的評分（Rating the Importance of Outcomes）</h2>
+<p>Core GRADE 使用者將首先識別所有對患者可能重要的結局，然後考慮那些足夠重要的結局。指引小組可能進行結構化流程，對潛在相關結局的重要性進行評分：</p>
+<ul>
+  <li>採用 9 分量表：7-9 分為關鍵結局（Critical outcomes）；4-6 分為重要但非關鍵結局（Important but not critical outcomes）；1-3 分為不重要結局</li>
+  <li>理想情況下，這種評分應基於患者價值觀和偏好的系統性回顧，並在資源允許時基於相關患者的焦點小組</li>
+  <li>結局的重要性可能因疾病階段不同而有所不同</li>
+  <li>另一個關鍵問題是時間框架：天、月或年，以及選擇多少時間框架</li>
+</ul>
+<div class="ph-box ph-box-key">
+  <b>★ 關鍵原則：</b>關鍵結局的最低確定性構成每個建議的整體確定性。因此，指引小組需要區分關鍵結局與重要但非關鍵結局。相比之下，系統性回顧作者（在不為特定指引而做的情況下）不需要在關鍵結局和重要但非關鍵結局之間做出明確的判斷。
+</div>
+
+<h2>四、問題的細化：不同族群、介入措施或結局定義中可能不同的效應（Refining the Question）</h2>
+<h3>4.1 相對效應 vs 絕對效應的區分</h3>
+<p>Core GRADE 使用者在細化臨床問題時，需考慮不同族群、介入措施或結局特性中治療效應可能不同的可能性：</p>
+<ul>
+  <li><b>相對效應（Relative Effects）</b>：相對危險度（RR）、勝算比（OR）或風險比（HR），通常在亞組間保持相似——真正的亞組相對效應是不常見的</li>
+  <li><b>絕對效應（Absolute Effects）</b>：風險差（Risk Difference）——對患者而言更重要，因為在未治療患者亞組具有不同基線風險的情況下，絕對效應會有顯著差異</li>
+</ul>
+<div class="ph-box ph-box-example">
+  <b>★ 重要範例：</b>一種治療相關的 50% 相對危險度降低，可能將年輕無共病者的死亡率從 2% 降至 1%（絕對差 1%），而在老年有共病者中從 40% 降至 20%（絕對差 20%）。這就是為什麼對患者而言絕對效應而非相對效應更重要：年輕人可能不願使用有重大傷害的介入措施，而老年人可能更傾向於使用。
+</div>
+
+<h3>4.2 效應修飾因素與亞組效應</h3>
+<p>可能修改相對效應或基線風險的患者特性包括：年齡、疾病嚴重程度、社會經濟狀況等患者情況，以及共病症。介入措施特性（如劑量或給藥持續時間）以及結局特性（如替代結局定義或不同隨訪持續時間）也可能影響治療效應。</p>
+<ul>
+  <li>★ Core GRADE 使用者應謹慎（parsimonious）地假設亞組相對效應，並為每個假設的效應指定方向——例如，不僅應識別效應可能依年齡不同而有所差異，還應指定如「介入措施在老年人中的效應將大於年輕人」</li>
+  <li>★ 大量假設的亞組效應和未能指定其方向，將削弱任何明顯亞組效應的可信度</li>
+  <li>建議：小組和回顧團隊應指定少量（≤3 個）相對亞組效應，包括假設的方向</li>
+</ul>
+<p>Core GRADE 使用者也可能預期不同基線（絕對）風險組別的不同建議——例如，對高風險患者支持介入措施的建議，對低風險患者反對的建議。</p>
+
+<h3>4.3 WHO COVID-19 nirmatrelvir-ritonavir 的實際案例</h3>
+<p>表 1 展示了 WHO 新冠肺炎指引中，制定 PICO 問題時如何同時考慮基線風險差異（影響絕對效應）和相對風險差異（效應修飾因素）：</p>
+<table>
+  <tr><th>PICO 要素及群體規格</th><th>內容</th></tr>
+  <tr><td>族群（Population）</td><td>根據 WHO 嚴重程度定義確診的非重症 COVID-19 患者</td></tr>
+  <tr><td>介入措施（Intervention）</td><td>Nirmatrelvir-ritonavir + 標準照護</td></tr>
+  <tr><td>比較物（Comparison）</td><td>標準照護</td></tr>
+  <tr><td>結局（Outcome）</td><td>住院、死亡率、機械通氣、導致停藥的不良反應、症狀緩解時間</td></tr>
+  <tr><td>可能因不同基線風險而有不同絕對效應的群體</td><td>基線風險的可能決定因素：免疫抑制患者或有慢性疾病者基線風險更大，因此介入措施的有益效應更大；血清學結果陰性者基線風險更大；未接種疫苗者基線風險更大</td></tr>
+  <tr><td>可能有不同相對風險的群體（效應修飾因素）</td><td>候選效應修飾因素：症狀發作時間較短者，介入措施的相對有益效應更大；血清學結果陰性者有益效應更大；未接種疫苗者有益效應更大</td></tr>
+</table>
+<p>實際結果：系統性回顧團隊未報告可信的相對亞組效應，但確認了不同基線風險患者之間效應的實質差異——即便相對效應相同，nirmatrelvir-ritonavir 對高風險患者可能顯著降低死亡率和住院率；對低風險患者效益可能微不足道（低風險者住院減少約 4/1000；高風險者減少約 50/1000）。指引小組因此對高風險患者發出強建議支持使用，對低風險患者發出弱建議反對使用。</p>
+
+<h3>4.4 間接證據的可能需求（Possible Need for Indirect Evidence）</h3>
+<p>最後，系統性回顧、衛生技術評估和臨床實踐指引必須考慮尋求間接證據的可能需求——即來自 PICO 與目標 PICO 不完全對應的研究的證據。例如，在 COVID-19 大流行早期，在 RCT 證據尚未獲得之前，指引制定者考慮了來自 ARDS 患者（臨床表現與重症 COVID-19 類似）的 RCT 證據，儘管受到間接性的限制，但仍支持對重症 COVID-19 患者使用類固醇的條件性建議。</p>
+
+<h2>五、GRADE 的證據確定性評分（GRADE's Rating of Certainty of Evidence）</h2>
+<p>GRADE 的確定性評分代表對真實效應位於所選閾值一側（如重要差異）或特定範圍（如小效應）的信心程度。Core GRADE 提供四類確定性評分系統：高（High）、中（Moderate）、低（Low）和極低（Very low）。重要的是，確定性評分指的是針對特定結局的整個證據體，而非個別研究。</p>
+
+<h3>5.1 起始確定性（Initial Certainty）</h3>
+<ul>
+  <li>來自隨機對照試驗（RCT）的證據：從高確定性開始</li>
+  <li>來自非隨機研究（觀察性研究，如隊列研究、病例對照研究）的證據：從低確定性開始</li>
+</ul>
+
+<h3>5.2 降低確定性的五個領域（Domains That Can Rate Down）</h3>
+<table>
+  <tr><th>降低確定性的領域</th><th>說明</th><th>降低程度</th></tr>
+  <tr><td>偏倚風險（Risk of Bias）</td><td>研究設計或執行的缺陷導致系統性誤差的可能性（如隨機化不充分、分配隱藏不當、缺乏盲法等）</td><td>嚴重→降低 1 級　非常嚴重→降低 2 級</td></tr>
+  <tr><td>不一致性（Inconsistency）</td><td>不同研究間點估計或置信區間的異質性，難以用機率解釋</td><td>嚴重→降低 1 級　非常嚴重→降低 2 級</td></tr>
+  <tr><td>間接性（Indirectness）</td><td>PICO 問題與可用研究之間的差異（研究族群、介入措施、比較物、結局的間接性）</td><td>嚴重→降低 1 級　非常嚴重→降低 2 級</td></tr>
+  <tr><td>不精確性（Imprecision）</td><td>置信區間寬或樣本量小，對效應估計的信心受限</td><td>嚴重→降低 1 級　非常嚴重→降低 2 級</td></tr>
+  <tr><td>發表偏倚（Publication Bias）</td><td>某些研究（尤其是陰性結果）未被發表，導致文獻中的系統性低估或高估</td><td>嚴重→降低 1 級　非常嚴重→降低 2 級</td></tr>
+</table>
+<p>提高確定性的兩個領域（僅適用於觀察性研究，不適用於 RCT）：</p>
+<table>
+  <tr><th>提高確定性的領域</th><th>說明</th></tr>
+  <tr><td>大效應（Large Effect）</td><td>觀察性研究中存在大且一致的效應，不太可能完全由混雜因素解釋</td></tr>
+  <tr><td>劑量-反應梯度（Dose-Response Gradient）</td><td>存在劑量-反應關係，增加暴露或介入強度與更大的效應相關</td></tr>
+</table>
+<div class="ph-box ph-box-note">
+  <b>注意：</b>先前 GRADE 指引中包含「可預測的偏倚方向（predictable direction of plausible confounding）」作為提高確定性的第三個域，但已被認定過於難以應用且很少適用，因此不再是 Core GRADE 的一部分。
+</div>
+
+<h3>5.3 確定性評分的關鍵概念</h3>
+<p>確定性是一個連續體，GRADE 將其劃分為四個類別——當評分接近類別之間的截止點時，類似的信心水平可能導致判斷上的分歧。同樣，在決定是否在任何一個領域降級時，評分可能接近「不嚴重」和「嚴重」（可能需要降低一級）或「嚴重」和「非常嚴重」（可能降低兩級）之間的截止點。</p>
+<table>
+  <tr><th>確定性等級</th><th>含義</th><th>臨床意義</th></tr>
+  <tr><td>高（High）★★★★</td><td>我們對真實效應的估計非常有信心，接近效應估計值</td><td>進一步研究不太可能改變我們對效應估計值的信心</td></tr>
+  <tr><td>中（Moderate）★★★☆</td><td>我們對效應估計值有中等信心；真實效應可能接近效應估計值，但也有可能存在實質差異</td><td>進一步研究可能對我們對效應估計值的信心產生重要影響，且可能改變估計值</td></tr>
+  <tr><td>低（Low）★★☆☆</td><td>我們對效應估計值的信心有限；真實效應可能與效應估計值存在實質差異</td><td>進一步研究很可能對我們對效應估計值的信心產生重要影響，且可能改變估計值</td></tr>
+  <tr><td>極低（Very Low）★☆☆☆</td><td>我們對效應估計值幾乎沒有信心；真實效應很可能與效應估計值存在實質差異</td><td>任何效應估計值都非常不確定</td></tr>
+</table>
+<div class="ph-box ph-box-key">
+  <b>★ 整體觀的重要性：</b>在考慮每個個別領域之後，需要後退一步，對確定性威脅進行整體評估——這體現了 Core GRADE 的優勢：在一個合理、精心設計的透明結構中促進深思熟慮的評估，允許靈活性。
+</div>
+
+<h2>六、完成 GRADE 流程：摘要結果表與從證據到建議（Evidence to Recommendations）</h2>
+<h3>6.1 摘要結果表（Summary of Findings Table）</h3>
+<p>回顧團隊將以相對和絕對效應估計值總結每個患者重要結局的證據，包括將確定性評為高、中、低或極低，使用 GRADE 摘要結果表。每行應包含：</p>
+<ul>
+  <li>結局測量的關鍵細節：估計值適用的時間段；連續結局的量表、較高或較低分數的含義，以及最小重要差異（如有）</li>
+  <li>對該結局效應估計值有貢獻的研究數量和患者數量</li>
+  <li>二元結局的相對效應（OR、RR 和相關 CI）；時間到事件結局（HR 和相關 CI）</li>
+  <li>絕對效應：二元結局的基線風險（對照組事件率）、介入組事件率、差值及其 CI；連續結局的各組均值和組間差值及其 CI</li>
+  <li>證據確定性，以及若從高確定性降級的原因</li>
+  <li>概括要點結論的通俗語言摘要（包括相關確定性）</li>
+</ul>
+<p>表 2：非重症 COVID-19 患者 nirmatrelvir-ritonavir 的摘要結果表（改編自 WHO 指引）：</p>
+<table>
+  <tr><th>結局</th><th>確定性（品質）</th><th>通俗語言</th></tr>
+  <tr><td>死亡率（低風險）</td><td>高（High）</td><td>Nirmatrelvir-ritonavir 對低風險個體的死亡率無重要降低</td></tr>
+  <tr><td>死亡率（高風險）</td><td>中（Moderate）（因 CI 跨越重要效益閾值而嚴重不精確）</td><td>Nirmatrelvir-ritonavir 可能降低高風險個體的死亡率</td></tr>
+  <tr><td>住院（低風險）</td><td>高（High）（CI 上限低於重要性閾值）</td><td>Nirmatrelvir-ritonavir 對低風險個體的住院無重要降低</td></tr>
+  <tr><td>住院（高風險）</td><td>高（High）</td><td>Nirmatrelvir-ritonavir 降低高風險個體的住院</td></tr>
+  <tr><td>症狀緩解時間（天）</td><td>低（Low）（非常嚴重的不精確性）</td><td>Nirmatrelvir-ritonavir 可能不縮短症狀緩解時間</td></tr>
+</table>
+
+<h3>6.2 從證據到建議（Moving from Evidence to Recommendations）</h3>
+<p>對於不特定指引的獨立系統性回顧，GRADE 流程到此結束。對於臨床實踐指引，小組隨後考慮摘要結果表以制定建議：</p>
+<ul>
+  <li>首先明確區分關鍵結局與重要但非關鍵結局——關鍵結局的最低確定性構成每個建議的整體確定性</li>
+  <li>從證據到建議，小組將考慮摘要結果表中總結的效益、傷害和負擔結局的相對重要性——他們考慮的不是自身的觀點，而是指引適用的患者或人群對結局的相對重要性</li>
+  <li>Core GRADE 規定小組應提供對相關族群推斷的價值觀和偏好的明確聲明</li>
+  <li>考量因素：效益的大小、傷害和負擔、證據確定性、患者價值觀和偏好，以及（若相關）費用、可行性、可接受性和公平性</li>
+</ul>
+
+<h3>6.3 建議的方向和強度（Direction and Strength of Recommendations）</h3>
+<table>
+  <tr><th>建議類型</th><th>術語</th><th>含義</th></tr>
+  <tr><td>強建議支持（Strong For）</td><td>「推薦（Recommend FOR）」</td><td>大多數或幾乎所有知情患者都會選擇該介入措施；臨床醫師幫助患者做出符合其價值觀和偏好的決定</td></tr>
+  <tr><td>弱/條件性建議支持（Weak For）</td><td>「建議（Suggest FOR）」</td><td>大多數知情患者會選擇該介入措施，但相當一部分不會選擇；支持患者共同決策</td></tr>
+  <tr><td>弱/條件性建議反對（Weak Against）</td><td>「建議反對（Suggest AGAINST）」</td><td>大多數知情患者會拒絕該介入措施，但相當一部分不會拒絕</td></tr>
+  <tr><td>強建議反對（Strong Against）</td><td>「推薦反對（Recommend AGAINST）」</td><td>大多數或幾乎所有知情患者都會拒絕該介入措施</td></tr>
+</table>
+<div class="ph-box ph-box-key">
+  <b>★ 何時發出強建議：</b>當決策者非常有信心效益大大超過傷害和負擔（或反之），使得大多數患者會做出相同選擇——這在高確定性證據下更常見，但即使證據確定性低，若效益明顯大於傷害，或若傷害明顯大於效益，也可能發出強建議。<br><br>
+  <b>★ 何時發出條件性建議：</b>當效益和傷害之間存在較接近的平衡（可能是因為效益不確定或效益和傷害相近），患者的選擇將取決於其個人情況、價值觀和偏好。
+</div>
+
+<h2>七、Core GRADE 方法的局限性（Limitations）</h2>
+<p>Core GRADE 方法的唯一嚴重局限性是在評估確定性和從證據移轉至建議的幾乎每個重要決策中所涉及的主觀性。然而，這種對主觀判斷的需求對任何考慮證據確定性或提供從證據移轉至建議方法的有用系統來說都是不可避免的。</p>
+<p>替代方案——一種提供永不打破規則的機械方法——將導致許多不良判斷，並被證明是不可行和不可接受的。</p>
+
+<h2>八、結論（Conclusion）</h2>
+<p>對於系統性回顧、衛生技術評估和臨床實踐指引，Core GRADE 方法從使用 PICO 格式制定相關臨床問題開始。同時，Core GRADE 使用者將考慮可能的相對和絕對亞組效應，並為少數可能可信的效應修飾因素提供關於效應方向的先驗假設。回顧者總結證據，包括相對和絕對效應的大小估計值和確定性，並在摘要結果表中呈現其結果。</p>
+<p>在決策背景下，決策者使用回顧結果解決效益、傷害和負擔、證據確定性，以及患者價值觀和偏好等核心問題。無論證據確定性高低，他們都這樣做，始終響應臨床醫師和患者對指導的需求。根據情況，他們可能在費用、可接受性、可行性和公平性等次要標準方面做出決定。</p>
+
+<div class="ph-box ph-box-summary">
+  <h3>📋 重點摘要（供快速複習）</h3>
+  <ol>
+    <li>GRADE 四個確定性等級：高（High）/ 中（Moderate）/ 低（Low）/ 極低（Very Low）。RCT 起始為高；觀察性研究起始為低。確定性是一個連續體，不要機械地應用規則</li>
+    <li>降低確定性的五個領域（可降 1-2 級）：①偏倚風險 ②不一致性 ③間接性 ④不精確性 ⑤發表偏倚。提高確定性（僅觀察性研究）：大效應、劑量反應梯度</li>
+    <li>PICO 制定要精確：P（族群）要盡可能精確，與試驗入選標準的差異越大→間接性越大；結局需評估重要性（關鍵 7-9 分 / 重要 4-6 分 / 不重要 1-3 分）；關鍵結局的最低確定性＝整體確定性</li>
+    <li>相對效應 vs 絕對效應：相對效應（RR/OR/HR）通常在亞組間相似；絕對效應（風險差）對患者更重要，同一相對效應可能產生截然不同的絕對效應</li>
+    <li>亞組效應的處理原則：應謹慎（≤3 個）、必須預先指定方向。大量未指定方向的假設→損害可信度。真正的相對亞組效應是不常見的</li>
+    <li>建議強度決策：強建議（Recommend）→大多數或幾乎所有知情患者做相同選擇；弱/條件性建議（Suggest）→效益和傷害接近，患者選擇取決於個人情況、價值觀和偏好</li>
+    <li>摘要結果表（Summary of Findings Table）必備要素：研究數量/患者數、相對效應（OR/RR + CI）、對照組基線風險、絕對效應差（+ CI）、確定性等級（+降級原因）、通俗語言摘要</li>
+    <li>間接證據的使用：當直接 RCT 證據缺乏時，可使用 PICO 不完全對應的間接證據——但需降低確定性（間接性降級）</li>
+  </ol>
+</div>
+
+<div class="ph-footer-cite">Guyatt et al., BMJ 2025 — Core GRADE 1 完整翻譯及整理</div>
+</div>
+`,
+  indirectness5: `<div class="pdf-html-content">
+<div class="ph-header">
+  <h1>Core GRADE 5：評估證據確定性——評估 Indirectness</h1>
+  <div class="ph-authors">Gordon Guyatt 等人</div>
+  <div class="ph-doi">BMJ 2025;389:e083865 | doi: 10.1136/bmj-2024-083865 | 接受日期：2025 年 3 月 21 日</div>
+</div>
+
+<div class="ph-box ph-box-summary">
+  <h3>摘要</h3>
+  <p>本文為七篇系列文章中的第五篇，介紹 Core GRADE 應用於 systematic reviews、clinical practice guidelines 及 health technology assessments 的方法，並探討 indirect evidence 的相關議題。Guideline 制定者及 health technology assessment 從業人員必須仔細界定 population、intervention、comparison 及 outcome（PICO）——即其 target PICO——並考量現有最佳證據與 target 的契合程度。當 target PICO 與 study PICO 存在實質差異時，研究所提供的即為 indirect evidence，Core GRADE 使用者可因此 indirectness 而對證據確定性進行降級。</p>
+</div>
+
+<div class="ph-box ph-box-key">
+  <h3>重點摘要</h3>
+  <ul>
+    <li>GRADE 區分兩種 indirectness 類型：network meta-analyses 中的 indirect comparisons，以及與 PICO 要素相關的 indirectness；後者為 Core GRADE 的焦點</li>
+    <li>Indirectness 發生於臨床問題（target PICO）中的 PICO 要素，與構成現有最佳證據之研究的 PICO 要素之間出現不一致時</li>
+    <li>當 direct evidence 的確定性為 low 時，Core GRADE 使用者應考慮正式搜尋 indirect evidence</li>
+    <li>Target population 與研究族群之間可能的不一致，包括：年齡差異、族群隨時間的改變，以及疾病或病況的差異</li>
+    <li>Target intervention 及 comparator 與研究之間可能的不一致，包括：intervention 的強度或持續時間，以及代表次佳照護的 comparator</li>
+    <li>Target outcome 與研究 outcome 之間可能的不一致，包括：追蹤時間長短，以及最令人擔憂的——使用 surrogate outcome</li>
+  </ul>
+</div>
+
+<h2>兩種 Indirectness 類型</h2>
+<h3>Indirect Comparisons</h3>
+<p>過去的 GRADE 指引以兩種方式使用 indirectness 一詞。其一稱為 indirect comparisons，所關心的是 intervention A 相較於 intervention B 的相對優劣，但證據並非來自 A 與 B 的直接或 head-to-head 比較，而是來自 A 對 C 及 B 對 C 的比較。過去十五年來，indirect comparisons 幾乎完全限於 network meta-analyses。Core GRADE 聚焦於單一 intervention 與單一 comparator 的直接比較，因此本文不再進一步討論 indirect comparisons，而將聚焦於與 PICO 要素相關的 indirectness。</p>
+
+<h3>與 PICO 要素相關的 Indirectness</h3>
+<p>Core GRADE 的方法從識別感興趣的臨床問題並界定 PICO 開始。我們將感興趣的臨床問題稱為 target PICO。我們將 indirectness 定義為 target PICO 與現有最佳證據之間的不一致。研究所提供的是針對實際納入族群、研究參與者所接受或使用之 intervention 與 comparison，以及研究者所測量之 outcome 的 direct evidence——即實際執行研究中的 PICO 要素。</p>
+<p>實際執行的研究可能與計畫中的研究有所不同。研究者可能原本尋求異質性族群，卻只納入了低風險病患；預期高度的 intervention 遵從性卻只觀察到低 adherence；預期 comparator 採用某種照護標準卻觀察到另一種；或計畫長期追蹤卻因資金短缺而被迫縮短追蹤時間。</p>
+
+<h2>Guidelines 及 Health Technology Assessments 與 Systematic Reviews 中的 Indirectness 考量</h2>
+<p>當研究者獨立於 health technology assessments 或 guidelines 進行 systematic reviews 時，他們可建立與 target PICO 緊密契合的 eligibility criteria；因此，indirectness 在此類回顧中通常不是主要問題。相較之下，health technology assessment 從業人員與 guideline 制定者必須處理病患及臨床醫師當前關心的問題；因此，他們必須識別並彙整現有最佳證據以回應這些問題，即便該證據對其 target PICO 而言只是粗略或有限的契合。</p>
+
+<h2>Indirectness 與 Inconsistency 的區別</h2>
+<p>Core GRADE 使用者必須注意 target PICO 與現有證據之間 intervention effects 可能存在差異，因而需要因 indirectness 而降級。若沒有理由認為相對效果在男性與女性之間、不同藥物劑量之間，或測量一年與三年 outcome 之間存在差異，他們就不會擔心將結果應用於這些情境。當他們認為相對效果可能存在差異時，則需對 indirectness 表達疑慮。</p>
+<p>Inconsistency 與 indirectness 的議題有何不同？若同時擁有來自老年人與年輕人、低劑量與高劑量，或長期追蹤與短期追蹤的證據，則可檢驗效果是否在這些變數之間存在差異，稱此情況為潛在的 inconsistency。然而，若 Core GRADE 使用者關心的是老年人的效果，但所有或幾乎所有證據都來自年輕人，他們便缺乏資料來檢驗效果是否在這些變數之間存在差異。在此情況下，他們必須使用 indirect evidence 對其 target PICO 進行推論；效果在此類變數之間存在差異的程度，成為需要基於基礎研究或其他可能類比條件的 indirect evidence 進行機制推理的問題，此方法因而較不可靠。</p>
+
+<h2>兩種情境下的 Indirectness</h2>
+<h3>在搜尋 Direct Evidence 過程中遭遇</h3>
+<p>搜尋 direct evidence 有時會產出在一個或多個 PICO 要素上存在某種程度 indirectness 的證據：病患可能比 target population 年齡偏大或偏小、有不同的族群背景，或有不同分布的共病症。此類差異通常不需要因 indirectness 而降級，原因在於：與此類特性相關的真實 subgroup effects 並不常見；基礎風險的差異，甚少導致相對效果的差異。然而，在某些特定情況下，確實存在嚴重的 indirectness，包括：對 interventions 的 non-adherence、聚焦於 surrogate outcomes 而非 patient important outcomes 的研究，以及問題性的 comparators。</p>
+
+<h3>刻意搜尋 Indirect Evidence 時</h3>
+<p>當符合 target PICO 的 direct evidence 不存在，或確定性極低或低時，Core GRADE 使用者可能回頭依賴與 target PICO 存在實質差異的證據。當 Core GRADE 使用者刻意搜尋 indirect evidence 時，他們不可避免地需要面對因 indirectness 而降低證據確定性的可能性。</p>
+
+<h3>忽視 Indirect Evidence</h3>
+<p>Clinical practice guidelines 的制定者有時會錯誤地得出某個 PICO 議題不存在任何證據的結論，然而，極低品質的證據可能仍可從臨床經驗中取得。以 COVID-19 大流行初期的 interventions 再利用為例，對 hydroxychloroquine 及 ivermectin 的錯誤熱情，突顯了此類 indirect evidence 的局限性，以及其所要求的謹慎推論。Indirect evidence 即便在考量因 indirectness 而降級之後，仍可能提供 low 甚至 moderate certainty 的證據；即便此類證據僅提供 very low certainty，它仍優於在無任何證據的情況下做出結論或決策。</p>
+
+<h2>Indirectness 範例：Population 的差異</h2>
+<h3>年齡差異</h3>
+<p>年齡族群的差異是病患中常見的 indirectness 議題。例如，在一項探討兒童 pancreatitis 處置的 guideline 中，作者發現此年齡層中抗生素使用的證據極為有限，因此進行了成人證據的搜尋，最終以 indirect evidence 作為建議的基礎；雖未進行正式的確定性評估，但作者將該證據描述為有限，承認因 indirectness 導致的確定性降低。</p>
+
+<h3>時間的改變</h3>
+<p>Target 病患可能在許多方面有別於被納入研究的病患，例如，病患的呈現特性可能隨時間演變，COVID-19 大流行期間即為一例。Casirivimab 與 imdevimab 的組合療法，以及單獨使用的 sotrovimab，均為與 SARS-CoV-2 spike protein 結合而使病毒失去活性的 monoclonal antibodies；2020 年及 2021 年進行的 RCT 顯示，兩者均可降低當時流行病毒感染病患的死亡率，促使 WHO 建議使用這些藥物。</p>
+<p>然而，當 omicron 或其後續 sublineages 成為主要流行株時，病毒 spike protein 序列的改變導致 in vitro 中和活性實質下降。target PICO 的族群已從感染早期流行病毒的病患，改變為感染後續流行變異株的病患；小組沒有 direct evidence。儘管如此，抗體中和能力下降的實驗室證據使小組得出結論：原始 RCT 現在對關鍵 outcomes 而言僅提供了極度 indirect evidence，這些抗體在新 target population 中幾乎不可能有效，因此強烈建議反對使用這些抗體是合理的。</p>
+
+<h3>病況的差異</h3>
+<p>有時，當 direct evidence 不存在或確定性極低或低時，systematic review 作者可以參考與 target population 有某些相似性但仍存在相當差異的族群。例如，一個 review team 探討了需要進行瓣膜性心臟病手術的透析依賴型末期腎病病患，在接受機械瓣膜與生物瓣膜之間的選擇。比較兩種瓣膜類型的觀察性研究，對作者某項關鍵 outcome——最終追蹤時術後及非胃腸道出血——僅提供了 very low certainty evidence。</p>
+<p>鑑於此 very low certainty evidence，作者尋求 indirect evidence，並進行了五項其他族群中 warfarin 對比 placebo RCT 的 systematic review 及 meta-analysis，發現出血的 incidence rate ratio 為 2.99（95% CI 1.46 至 6.13），在因 population indirectness 而降級後，他們認為這構成了機械瓣膜增加出血風險的 moderate certainty evidence。</p>
+
+<h3>危害的 Indirect Evidence</h3>
+<p>在罕見病況中，RCT 通常規模小或極小，對 intervention 危害的估計因而可能產生極寬的 CI，需要因 imprecision 而降級兩次。在此類情況中，interventions 可能已在患有其他病況的更大族群中再利用；雖然在這些病況與新適應症之間假設效益相似是不明智的，但人們可能預期與某藥物相關的不良效應，無論針對何種疾病給藥，均應相似。因此，對於危害，可能僅需因 indirectness 降級一次——甚至完全不需要降級。</p>
+
+<h2>Indirectness 範例：Interventions 的差異</h2>
+<p>研究中的 interventions 可能在以下幾方面有別於 target PICO：藥物劑量、給藥持續時間、給藥途徑，或 interventions 提供者的技術水準。另一個令人擔憂的常見 indirectness 來源是，作者可能未充分描述 interventions 的組成，此缺失可能使其難以複製；intervention 描述不足構成因 indirectness 而降級的理由。</p>
+
+<h3>Non-adherence</h3>
+<p>一般而言，病患及其醫療提供者關心的是 intervention 在按預期使用時的影響；高度 non-adherence 引入了問題性的 indirectness，進而削弱了證據的確定性。例如，一項 nortriptyline 作為 nicotine replacement 輔助戒菸的 RCT，將 901 名接受戒菸服務的成人隨機分配至 nortriptyline 或 placebo 組；在戒菸日後一年，nortriptyline 組 11% 對比對照組 9% 的病患已戒菸（RR 1.26，95% CI 0.84 至 1.87）。然而，在戒菸日後四週，治療組僅 59% 的病患及對照組僅 56% 的病患仍在服藥。若 adherence 接近 100%，intervention 的影響可能更大、估計更精確，且證據將值得更高確定性。</p>
+
+<h3>允許轉換治療的試驗</h3>
+<p>腫瘤學試驗的研究方案可能允許在病患對原始 intervention 無反應時轉換治療。例如，考量 interferon-alfa 與 sunitinib 在腎臟癌成人病患中的相對效果，systematic review 作者遭遇了允許在 interferon-alfa 治療後出現疾病進展的受試者接受 sunitinib 及其他相關治療的試驗。此設計對 indirectness 議題的影響取決於 target PICO。</p>
+
+<h3>Intervention 技術的改變</h3>
+<p>當 intervention 是裝置或技術時，其隨時間的演進可能導致重要的 indirectness 而降低確定性。例如，幫助糖尿病患者管理疾病的裝置不斷更新：continuous glucose monitoring systems 在 1990 年代末獲 FDA 核准，並隨新感測器技術快速演進。糖尿病技術指引在舊有證據的 indirectness 方面面臨挑戰，並持續在排除過時系統的研究與納入舊有系統的研究並因 indirectness 而降低確定性之間取得平衡。</p>
+
+<h2>Indirectness 範例：Comparators 的差異</h2>
+<p>Comparator 有別於 target PICO 中的情況，包括：各司法管轄區標準照護的差異、在有效治療已存在的情況下使用 placebo、使用次佳的舊有替代方案而非目前最佳替代方案，以及劑量或給藥途徑的差異。使用 placebo 而非 active comparators 的問題相當普遍，尤其是在最終目的為獲得法規核准的藥物開發試驗中。</p>
+<p>在工業贊助試驗中使用次佳 comparators 的情況相當普遍。在 49 項已識別的 multiple myeloma RCT 中，七項（14%）在已發表顯示現有優越方案優越性的研究後，仍開始將病患納入次佳對照組；七項中所有主要資金來源均為製藥工業。這些試驗僅提供了若試驗研究者選擇最佳可用 comparator 時可能發生何事的 indirect evidence。</p>
+
+<h2>Indirectness 範例：Outcomes 的差異</h2>
+<p>Intervention 與 comparators 對 outcomes 的影響，可能因 outcomes 的測量方式（如：有症狀對比無症狀脊椎骨折）或追蹤時間（短期對比長期）而有所不同。Outcomes 也可能因測量方式不同而有差異：直接測量（死亡率）或透過 surrogate measures 間接測量（HIV 中的病毒量降低）；當 Core GRADE 使用者納入僅測量 surrogates 而非 patient important outcomes 的研究時，此類問題將出現。</p>
+<p>考量患有 mitral valve stenosis、面臨 percutaneous 對比 surgical mitral commissurotomy 選擇的病患；此類病患的關鍵 outcome 是因手術長期失敗而導致的心臟衰竭症狀進展。一項 systematic review 發現，沒有任何合格研究測量了病患的長期症狀；研究者所測量的是症狀的 surrogate——30 個月時以 echocardiography 或 cardiac catheterisation 測量的 mitral valve area。Systematic review 作者最終因 imprecision、inconsistency 及 outcome indirectness 而降低證據確定性，得到 very low certainty evidence。</p>
+<div class="ph-box ph-box-key">
+  雖然有時可考慮對任何 PICO 要素的 indirectness 降級超過一個級別，但此可能性通常在 surrogate outcomes 方面更為突出。例如，在末期腎病病患中，骨密度對於骨折，以及冠狀動脈鈣化對於心肌梗塞，代表著可能更好地預測治療對 patient important adverse outcomes 影響的 surrogates，因此可能只需因 indirectness 降級一個級別；而鈣磷代謝的測量則是非常 indirect 的測量指標，因此值得因 indirectness 降級兩個級別。
+</div>
+
+<h3>表一：Percutaneous 對比 Surgical Mitral Commissurotomy 長期心臟衰竭症狀 Summary of Findings Table</h3>
+<table>
+  <tr><th>Outcome</th><th>試驗數 / 病患數</th><th>結果</th><th>證據確定性</th></tr>
+  <tr><td>從 mitral valve area 推斷之心臟衰竭症狀</td><td>六項 RCT，458 名病患</td><td>接受 commissurotomy 病患的 mitral valve area 高 0.13 cm²（95% CI 低 0.09 至高 0.35），推斷心臟衰竭症狀幾乎無差異</td><td>Very low：因嚴重 indirectness、嚴重 imprecision 及嚴重 inconsistency</td></tr>
+</table>
+
+<h3>表二：Indirectness 議題摘要</h3>
+<table>
+  <tr><th>PICO 要素</th><th>降級原因</th><th>舉例</th><th>降級可能性</th></tr>
+  <tr><td>Population</td><td>Population 差異可能與效果大小相互作用</td><td>成人對比兒科；病毒抗原的改變；共病症</td><td>低可能性，因相對效果通常在族群間相似</td></tr>
+  <tr><td>Intervention</td><td>Interventions 在劑量、持續時間或亞類方面通常有所不同</td><td>同類別藥物；藥物劑量；Non-adherence；治療策略中轉換對比不轉換；技術進步</td><td>中等可能性，取決於潛在生物學及 non-adherence 和轉換頻率等議題的嚴重程度</td></tr>
+  <tr><td>Comparison</td><td>不同 comparators 可能對 target outcomes 有不同效果</td><td>使用 placebo 對比非盲化標準治療或替代 intervention；試驗中的次佳舊有替代方案</td><td>在有效治療已存在的情況下，評估新藥試驗中的相當可能性</td></tr>
+  <tr><td>Outcome</td><td>Surrogates 對效果的反映往往無法轉化為 patient important outcomes 的改善</td><td>心臟衰竭中的心功能對比死亡率；骨質疏鬆症中的骨密度對比骨折</td><td>高可能性，因在檢驗 patient important outcomes 的 RCT 中結果令人失望的情況頻繁</td></tr>
+</table>
+
+<h2>結論</h2>
+<p>現有研究之 PICO 與 target PICO 之間的契合程度有限——在 GRADE 中稱為 indirectness——在 guidelines 及 health technology assessments 的制定中，是降低證據確定性的常見原因。當 direct evidence 不存在或確定性極低或低時，Core GRADE 使用者應考慮搜尋可能帶來更高確定性證據的 indirect evidence。每當相關研究中的 PICO 要素與 target PICO 未完全一致時，他們必須考量這些差異是否可能導致 intervention effects 的重要差異，若可能，則應因 indirectness 降級一個級別——對 surrogate outcomes 而言則尤其可能需要降級兩個級別。</p>
+
+<div class="ph-footer-cite">Guyatt G et al. Core GRADE 5: rating certainty of evidence—assessing indirectness. BMJ 2025;389:e083865. doi: 10.1136/bmj-2024-083865</div>
+</div>
+`,
+  imprecision2: `<div class="pdf-html-content">
+<div class="ph-header">
+  <h1>Core GRADE 系列教學文件 第二篇：確定性評分目標的選擇與不精確性（Imprecision）之評估</h1>
+  <div class="ph-authors">臨床藥師 EBM 工作坊</div>
+  <div class="ph-doi">來源：Guyatt et al., BMJ 2025;389:e081904　繁體中文整理版</div>
+</div>
+
+<div class="ph-box ph-box-summary">
+  <h3>📌 核心重點摘要（Summary Points）</h3>
+  <ul>
+    <li><b>MID 閾值：</b>Core GRADE 使用者可評估效果是否達到「最小重要差異（Minimal Important Difference, MID）」，通常可簡化不精確性評分並增進解釋性</li>
+    <li><b>Null 閾值：</b>在欲最小化價值判斷的情境下，可使用 null 閾值，評估是否存在真實的基礎治療效果（true underlying effect）</li>
+    <li><b>降級標準：</b>若 95% 信賴區間（CI）跨越所選閾值，須考慮降低確定性等級；若同時跨越重要效益與重要危害兩個閾值，通常降低兩個等級</li>
+    <li><b>OIS 原則：</b>若 CI 未跨越閾值但效果量很大，需評估樣本數是否達到最適資訊量（Optimal Information Size, OIS）</li>
+  </ul>
+</div>
+
+<h2>一、GRADE 確定性評分體系概述</h2>
+<h3>1.1 GRADE 確定性等級架構</h3>
+<p>GRADE 將證據確定性分為四個等級，隨機對照試驗（RCT）初始設定為高確定性（High），觀察性研究則從低確定性（Low）起始。</p>
+<table>
+  <tr><th>確定性等級</th><th>Plain Language 陳述（Null 閾值）</th><th>Plain Language 陳述（MID 閾值）</th></tr>
+  <tr><td>⬤⬤⬤⬤ High（高）</td><td>治療具有效益 / 改善結果 X</td><td>治療具有重要效益 / 治療效益極小甚至沒有</td></tr>
+  <tr><td>⬤⬤⬤◯ Moderate（中）</td><td>治療可能具有效益（likely）</td><td>治療可能（likely）具有重要效益 / 效益極小</td></tr>
+  <tr><td>⬤⬤◯◯ Low（低）</td><td>治療或許具有效益（may）</td><td>治療或許（may）具有重要效益 / 效益極小</td></tr>
+  <tr><td>⬤◯◯◯ Very Low（極低）</td><td>對治療是否具有效益極不確定</td><td>對治療是否具有效益極不確定</td></tr>
+</table>
+<div class="ph-box ph-box-warning">
+  ⚠ <b>臨床解讀關鍵：</b>"likely"（可能）對應 Moderate 確定性，"may"（或許）對應 Low 確定性。兩者差異在臨床決策與指引建議強度上具有重大意義，須嚴格區分。
+</div>
+
+<h2>二、確定性評分目標（Target of Certainty Rating）</h2>
+<h3>2.1 核心問題框架</h3>
+<p>Core GRADE 聚焦於兩個核心問題：</p>
+<ul>
+  <li><b>問題一：</b>與對照組相比，是否存在效果？（使用 Null 閾值）</li>
+  <li><b>問題二：</b>效果是否大到對病患具有重要性？（使用 MID 閾值）</li>
+</ul>
+
+<h3>2.2 最小重要差異（Minimal Important Difference, MID）</h3>
+<p>MID 代表病患感知為重要的最小變化量，是 Core GRADE 方法論的核心概念。</p>
+<table>
+  <tr><th>項目</th><th>MID 閾值</th><th>Null 閾值</th></tr>
+  <tr><td>核心問題</td><td>效果是否達到臨床重要性？</td><td>是否存在真實治療效果？</td></tr>
+  <tr><td>優點</td><td>貼近臨床決策需求；可簡化不精確性評分；結果解釋更直觀</td><td>最小化價值判斷；適用於 MID 難以確立的情境</td></tr>
+  <tr><td>限制</td><td>需要對結果重要性做出明確的價值判斷；MID 可能難以確立</td><td>無法完全迴避重要性判斷（當點估計值接近 null 時）</td></tr>
+  <tr><td>適用情境</td><td>臨床指引制定；HTA；需要病患觀點之決策情境</td><td>系統回顧作者不納入 MID 判斷職責時</td></tr>
+  <tr><td>常見來源</td><td>病患回報結果（PRO）；現有文獻；臨床經驗</td><td>統計學 null（risk difference = 0%）</td></tr>
+</table>
+
+<h3>2.3 選擇確定性評分目標的三步驟流程</h3>
+<table>
+  <tr><th>步驟</th><th>名稱</th><th>說明</th></tr>
+  <tr><td>①</td><td>選擇閾值</td><td>決定使用 MID 閾值（評估效果是否重要）或 Null 閾值（評估是否存在效果）</td></tr>
+  <tr><td>②</td><td>建立絕對效果</td><td>透過 meta-analysis 獲得最佳效果估計值（WMD 或 risk difference）及 95% CI。二元結果須將相對風險轉換為絕對風險差（baseline risk × RR）</td></tr>
+  <tr><td>③</td><td>選擇目標</td><td>依據點估計值相對於閾值的位置決定評分目標：點估計 > MID → 評估「重要效果」的確定性；點估計 < MID → 評估「無重要效果（little to no effect）」的確定性</td></tr>
+</table>
+<div class="ph-box ph-box-key">
+  ⚡ <b>關鍵原則：</b>Core GRADE 強調使用絕對效果（而非相對效果）進行判斷。相同的 RR=0.5 可能代表 1% 的絕對風險降低（基準風險 2%）或 20% 的絕對風險降低（基準風險 40%）——兩者對病患的臨床意義截然不同。
+</div>
+
+<h2>三、不精確性（Imprecision）評估</h2>
+<h3>3.1 不精確性的定義</h3>
+<p>Meta-analysis 提供效果的最佳點估計值，95% CI 則反映真實效果合理存在的範圍。CI 的寬度提供關於不精確性程度的關鍵資訊——CI 越寬，不精確性越大，對確定性的影響越顯著。</p>
+
+<h3>3.2 是否降級：CI 與閾值的關係</h3>
+<table>
+  <tr><th>情境</th><th>CI 與閾值關係</th><th>使用 Null 閾值</th><th>使用 MID 閾值</th></tr>
+  <tr><td>(a) 點估計 >> MID，CI 窄</td><td>CI 未跨越任一閾值</td><td>✅ 不降級</td><td>✅ 不降級</td></tr>
+  <tr><td>(b) 點估計在 Null 與 MID 之間</td><td>CI 跨越 MID 但未跨越 Null</td><td>✅ 不降級</td><td>⬇ 降一級</td></tr>
+  <tr><td>(c) 點估計接近 Null，CI 寬</td><td>CI 跨越 Null 及 MID</td><td>⬇ 降一級</td><td>⬇ 降一級</td></tr>
+  <tr><td>(d) 點估計在 Null 附近，CI 極寬</td><td>CI 同時涵蓋重要效益與重要危害</td><td>⬇⬇ 考慮降兩級</td><td>⬇⬇ 考慮降兩級</td></tr>
+</table>
+
+<h3>3.3 降一級 vs. 降兩級的判斷標準</h3>
+<p><b>降兩級的考慮情境：</b></p>
+<ul>
+  <li><b>條件一：</b>CI 同時跨越重要效益閾值（MID for benefit）與重要危害閾值（MID for harm）</li>
+  <li><b>條件二：</b>最適切的 plain language 陳述應為 "may"（Low 確定性），而非 "likely"（Moderate 確定性）</li>
+</ul>
+<p>→ 若在無其他降級因素的前提下，以上任一條件成立，即應考慮降兩級</p>
+
+<div class="ph-box ph-box-example">
+  <h4>臨床案例一：類固醇用於社區獲得性肺炎（Community Acquired Pneumonia）</h4>
+  <p>Meta-analysis 結果：類固醇使每 1000 名病患死亡人數減少 29 人，95% CI：52 fewer～6 fewer</p>
+  <table>
+    <tr><th>閾值選擇</th><th>判斷邏輯</th><th>結論</th></tr>
+    <tr><td>Null 閾值</td><td>CI（-52 ~ -6）完全在 Null 以下，未跨越</td><td>✅ 不因不精確性降級 → High</td></tr>
+    <tr><td>MID₁ = 10/1000</td><td>點估計（-29）> MID₁，但 CI 下界（-6）< MID₁，跨越 MID 閾值</td><td>⬇ 因不精確性降一級</td></tr>
+    <tr><td>MID₂ = 5/1000</td><td>CI 下界（-6）< MID₂，未跨越 MID₂ 閾值</td><td>✅ 不因不精確性降級</td></tr>
+  </table>
+  <p>📝 <b>教學重點：</b>同一組數據，MID 的選擇值不同，可導致截然不同的降級決策。MID 設定應來自病患觀點，並有充分的文獻或臨床依據。</p>
+</div>
+
+<div class="ph-box ph-box-example">
+  <h4>臨床案例二：不同劑量類固醇用於血管炎（Vasculitis）</h4>
+  <p>Meta-analysis 結果：低劑量組每 100 人減少 21 例死亡，95% CI：-60（大幅減少）至 +36（顯著增加）；MID 設定為 1%（10/1000）</p>
+  <table>
+    <tr><th>判斷步驟</th><th>分析</th></tr>
+    <tr><td>1. 確定評分目標</td><td>點估計（-21/100）> MID（-1/100）→ 目標：評估「重要死亡率降低」的確定性</td></tr>
+    <tr><td>2. CI 與 MID for benefit</td><td>CI 跨越 MID for benefit（-60 包含重要效益）→ 須降級</td></tr>
+    <tr><td>3. CI 與 MID for harm</td><td>CI 同時包含 +36/100（重要危害）→ 跨越兩個閾值</td></tr>
+    <tr><td>4. 最適 plain language</td><td>"may result in"（Low）比 "likely results in"（Moderate）更能準確傳達不確定性</td></tr>
+    <tr><td>5. 最終決策</td><td>⬇⬇ 降兩級 → 僅 Low certainty evidence（尚未考慮其他四個降級因素）</td></tr>
+  </table>
+</div>
+
+<h2>四、效果量大但樣本數有限時的處理：OIS 原則</h2>
+<h3>4.1 為何需要 OIS？</h3>
+<p>當 CI 未跨越閾值，看似不需降級時，若效果量異常大（相對風險降低 > 30-40%），早期研究的大效果往往無法在後續複製（regression to the mean）。此時需評估樣本數是否充分。</p>
+
+<h3>4.2 最適資訊量（Optimal Information Size, OIS）計算</h3>
+<table>
+  <tr><th>項目</th><th>二元結果（Binary Outcome）</th><th>連續結果（Continuous Outcome）</th></tr>
+  <tr><td>觸發條件</td><td>RR 降低 > 30-40%；CI 未跨越閾值</td><td>效果量大；CI 未跨越 MID</td></tr>
+  <tr><td>需指定參數</td><td>α（通常 0.05）、β（通常 0.20）、control event rate、相對風險降低（20-25%）</td><td>MID（最小重要差異）+ 現有研究的標準差（SD）</td></tr>
+  <tr><td>替代規則（Thumb Rule）</td><td>計算 OIS 值，與實際總樣本數比較</td><td>每組 ≥ 400 人（總計 ≥ 800 人），則不降級</td></tr>
+  <tr><td>線上計算工具</td><td colspan="2">https://www.openepi.com/SampleSize/SSCohort.htm</td></tr>
+</table>
+
+<h3>4.3 OIS 判斷流程</h3>
+<table>
+  <tr><th>判斷</th><th>行動</th></tr>
+  <tr><td>實際 N ≥ OIS（或 ≥ 800）</td><td>✅ 不因不精確性降級</td></tr>
+  <tr><td>OIS > 實際 N > 30% OIS</td><td>⬇ 降一級</td></tr>
+  <tr><td>實際 N < 30% OIS</td><td>⬇⬇ 考慮降兩級</td></tr>
+  <tr><td>RR CI ratio ≥ 3 / OR CI ratio ≥ 2.5（效果大且不精確）</td><td>⬇⬇ 考慮降兩級（需進一步計算 OIS 確認）</td></tr>
+</table>
+
+<h2>五、完整判斷流程圖（文字版）</h2>
+<table>
+  <tr><td><b>Step 1</b></td><td>選擇閾值：MID 閾值（評估效果重要性）或 Null 閾值（評估效果存在性）</td></tr>
+  <tr><td><b>Step 2</b></td><td>建立絕對效果估計值（RD 或 WMD）及 95% CI</td></tr>
+  <tr><td><b>Step 3</b></td><td>依點估計值位置選定評分目標（重要效果 / 無重要效果 / 非 null 效果）</td></tr>
+  <tr><td><b>Step 4</b></td><td>評估 CI 是否跨越閾值？是 → 降一級；考慮是否跨越兩個閾值 → 若是，考慮降兩級。否 → 效果量是否很大？效果中等 → 不降級；效果大 → 進入 OIS 評估</td></tr>
+  <tr><td><b>Step 5</b>（OIS 分支）</td><td>N ≥ OIS → 不降級；N < OIS → 降一級；N < 30% OIS → 考慮降兩級</td></tr>
+  <tr><td><b>Step 6</b></td><td>Plain Language 複查：確認使用 "likely" 或 "may" 是否與降級決策一致</td></tr>
+</table>
+
+<h2>六、常見錯誤與陷阱（Critical Pitfalls）</h2>
+<table>
+  <tr><th>常見錯誤</th><th>正確做法</th></tr>
+  <tr><td>❌ 使用相對效果（RR/OR）判斷重要性</td><td>✅ 必須轉換為絕對風險差（RD = baseline risk × RR）後再判斷</td></tr>
+  <tr><td>❌ CI 跨越 Null 就自動降一級（未考慮所選閾值）</td><td>✅ 降級與否取決於 CI 是否跨越「所選閾值」（Null 或 MID），兩者邏輯不同</td></tr>
+  <tr><td>❌ 效果大時從不考慮 OIS</td><td>✅ RR reduction > 30% 且 CI 未跨越閾值時，必須評估 OIS</td></tr>
+  <tr><td>❌ 直接用 "likely" 描述 Low certainty 結果</td><td>✅ Low → "may"；Moderate → "likely"；High → 直述（without qualifier）</td></tr>
+  <tr><td>❌ MID 僅跨越單側卻降兩級</td><td>✅ 降兩級需：CI 同時跨越效益與危害 MID，或 plain language 評估確認更不確定</td></tr>
+  <tr><td>❌ 忽略 point estimate 與 Null 極近時的處理</td><td>✅ 點估計接近 Null 時（使用 Null 閾值），改以 MID 判斷「little to no effect」，並相應評估不精確性</td></tr>
+</table>
+
+<h2>七、快速查核表（Quick Reference Checklist）</h2>
+<ul>
+  <li>□ Step 1：已選定閾值（MID 或 Null）？MID 來源有依據？</li>
+  <li>□ Step 2：已取得絕對效果估計值（非相對值）？95% CI 已建立？</li>
+  <li>□ Step 3：已確認點估計值位置，選定評分目標（重要效果 / 無重要效果）？</li>
+  <li>□ Step 4：CI 是否跨越閾值？是否同時跨越效益與危害兩側閾值？</li>
+  <li>□ Step 5：若效果大（RR reduction > 30%）且 CI 未跨越閾值，已評估 OIS？</li>
+  <li>□ Step 6：Plain language 陳述與最終確定性等級一致（may/likely/直述）？</li>
+  <li>□ Step 7：降級決策已與其他四個 GRADE 領域（risk of bias, inconsistency, indirectness, publication bias）綜合考量？</li>
+</ul>
+
+<h2>八、來源與延伸閱讀</h2>
+<p><b>主要文獻：</b>Guyatt G, Zeng L, et al. Core GRADE 2: choosing the target of certainty rating and assessing imprecision. BMJ 2025;389:e081904</p>
+<p><b>相關工具與資源：</b></p>
+<ul>
+  <li>OIS 計算器：https://www.openepi.com/SampleSize/SSCohort.htm</li>
+  <li>GRADEpro GDT：https://gradepro.org</li>
+  <li>GRADE Working Group：https://www.gradeworkinggroup.org</li>
+</ul>
+
+<div class="ph-footer-cite">本文件依 BMJ Core GRADE 系列論文整理，僅供臨床藥師教育訓練使用</div>
+</div>
+`,
+  inconsistency3: `<div class="pdf-html-content">
+<div class="ph-header">
+  <h1>Core GRADE 系列教學文件 第三篇：不一致性（Inconsistency）評估</h1>
+  <div class="ph-authors">臨床藥師 EBM 工作坊</div>
+  <div class="ph-doi">來源：Guyatt et al., BMJ 2025;389:e081905　繁體中文整理版</div>
+</div>
+
+<div class="ph-box ph-box-summary">
+  <h3>📌 核心重點摘要（Summary Points）</h3>
+  <ul>
+    <li><b>Inconsistency 定義：</b>跨研究間無法解釋的結果變異性（unexplained variability）</li>
+    <li><b>二元結果：</b>Core GRADE 關注相對效果（RR / OR）的一致性，而非絕對效果</li>
+    <li><b>判斷工具：</b>視覺檢視 forest plot（點估計差異、CI 重疊程度、點估計相對於閾值的位置）</li>
+    <li><b>I² 統計量：</b>提供輔助資訊，但可能誤導，須謹慎解讀；I² < 30% 通常不需降級</li>
+    <li><b>Subgroup 效應可信度：</b>關鍵標準：交互作用檢定 P 值、a priori 方向性假說、within vs. between study 比較</li>
+    <li><b>可信 subgroup 效應：</b>各亞組分別呈現結果並獨立評估確定性等級</li>
+  </ul>
+</div>
+
+<h2>一、不一致性（Inconsistency）概念框架</h2>
+<h3>1.1 定義與臨床關聯性</h3>
+<p>Inconsistency 指的是跨研究間的無法解釋的結果變異性。Core GRADE 特別關注「足以影響臨床推論」的 inconsistency——即依據不同研究結果，可能導出截然不同臨床決策的情境。統計學文獻中常以「heterogeneity（異質性）」描述此概念，尤其在統計檢定情境下。</p>
+<div class="ph-box ph-box-warning">
+  ⚠ <b>核心警示：</b>不一致性的重要性取決於其臨床意涵，而非單純的統計顯著性。若各研究點估計均在閾值同側，即使 I² 偏高，臨床決策方向仍可一致，不必然須降級。
+</div>
+
+<h3>1.2 二元結果 vs. 連續結果：應關注哪種效果指標？</h3>
+<table>
+  <tr><th>結果類型</th><th>應關注的效果指標</th><th>理由</th></tr>
+  <tr><td>二元結果（Binary Outcome）</td><td>相對效果（RR, HR, OR）</td><td>相對效果在不同基礎風險族群間通常保持穩定；絕對效果因基礎風險不同而必然變異，若以絕對效果判斷一致性會產生假性 inconsistency</td></tr>
+  <tr><td>連續結果（Continuous Outcome）</td><td>絕對效果（MD, WMD）</td><td>連續結果本質上以絕對差值呈現（住院天數、疼痛分數、功能狀態等），無相對效果可供比較</td></tr>
+</table>
+
+<div class="ph-box ph-box-example">
+  <h4>臨床範例：相對風險一致，絕對風險差異懸殊</h4>
+  <p>假設某介入措施在三個不同基礎風險族群的相對風險均為 0.67（相對風險降低 33%）：</p>
+  <table>
+    <tr><th>族群</th><th>控制組事件率</th><th>介入組事件率</th><th>RR</th><th>絕對風險差（RD）</th></tr>
+    <tr><td>高風險族群</td><td>30%</td><td>20%</td><td>0.67</td><td>10%</td></tr>
+    <tr><td>中風險族群</td><td>10%</td><td>6.7%</td><td>0.67</td><td>3.3%</td></tr>
+    <tr><td>低風險族群</td><td>3%</td><td>2%</td><td>0.67</td><td>1%</td></tr>
+  </table>
+  <p>📝 <b>教學重點：</b>上表示範了為何 Core GRADE 對二元結果以相對效果評估一致性：RR 恆為 0.67，顯示一致；但 RD 從 1% 到 10%，若以 RD 判斷則呈現「不一致」——此為假性不一致，不應導致降級。RD 的差異應透過 baseline risk 調整後分族群呈現，而非視為 inconsistency。</p>
+</div>
+
+<h2>二、事先準備：A Priori 假說建構（Subgroup Hypotheses）</h2>
+<h3>2.1 為何需要 A Priori 假說？</h3>
+<p>Core GRADE 鼓勵研究者採用廣泛 PICO 框架以最大化精確性與通用性，但同時必須預先準備應對可能的不一致性。事先（a priori）建構方向性假說是處理 inconsistency 的核心策略。</p>
+
+<h3>2.2 PICO 建構時的三種 Subgroup 情境</h3>
+<table>
+  <tr><th>#</th><th>情境描述</th><th>PICO 建構策略</th><th>臨床範例</th></tr>
+  <tr><td>1</td><td>無理由懷疑亞組間效果不同</td><td>合併所有亞組（單一效果估計），不進行 subgroup analysis</td><td>WHO COVID-19 指引：男女性別間效果極可能相似，提供單一建議</td></tr>
+  <tr><td>2</td><td>確信亞組間效果不同（有充分前期證據）</td><td>縮窄 PICO 至單一亞組，或建立獨立 PICO 分別分析</td><td>輸血閾值指引：兒童與成人生理差異明確，分別建立 PICO 並提供獨立建議</td></tr>
+  <tr><td>3</td><td>有理由懷疑效果不同，但不確定（方向性假說）</td><td>廣泛 PICO + 事先設定方向性 subgroup hypothesis，再進行 subgroup analysis 或 meta-regression</td><td>HIV/TB 共病者早期 vs. 延遲 ART：假說 CD4 < 50×10⁶ 者早期 ART 效果較差（基於 IRIS 發生率前期證據）</td></tr>
+</table>
+
+<div class="ph-box ph-box-key">
+  🔑 <b>關鍵原則：</b>
+  <ul>
+    <li><b>方向性（Directionality）：</b>假說必須包含效果方向，例如不只說「老年人與年輕人效果可能不同」，而要說「老年人效果可能更大」</li>
+    <li><b>數量限制：</b>理想上不超過 3 個 a priori 假說；假說越多，偽陽性機率越高</li>
+    <li><b>避免 post hoc 探索：</b>未預先設定的 subgroup analysis 可信度極低，應明確標示並謹慎解讀</li>
+    <li><b>無法確定方向 → 選情境 1：</b>若無法自信地指出亞組效果方向，應選擇情境 1（廣泛 PICO，不進行 subgroup analysis）</li>
+  </ul>
+</div>
+
+<h2>三、判斷嚴重不一致性的標準</h2>
+<h3>3.1 三項視覺標準（Forest Plot 判讀）</h3>
+<table>
+  <tr><th>#</th><th>判斷標準</th><th>一致性案例特徵</th><th>不一致性案例特徵</th></tr>
+  <tr><td>①</td><td>點估計差異程度</td><td>各研究點估計相近（如 RR 0.71～0.76）→ 不傾向降級</td><td>研究間點估計差異大（如 RR 0.44 vs. 1.25）→ 傾向降級</td></tr>
+  <tr><td>②</td><td>CI 重疊程度</td><td>各研究 CI 大部分重疊 → 不傾向降級</td><td>CI 完全不重疊（尤其不同方向的研究間）→ 強烈傾向降級</td></tr>
+  <tr><td>③</td><td>點估計相對於閾值的位置</td><td>絕大多數點估計均在閾值同側（Null 或 MID 同側）→ 不傾向降級</td><td>相當比例的點估計分布在閾值兩側（有研究顯示效益，有研究顯示危害）→ 傾向降級</td></tr>
+</table>
+<div class="ph-box ph-box-warning">
+  ⚠ <b>判讀注意事項：</b>
+  <ul>
+    <li>閾值選擇影響判斷：使用 Null 閾值 vs. MID 閾值，對同一組數據可能導出不同的 inconsistency 結論</li>
+    <li>CI 重疊是關鍵：結論嚴重 inconsistency 時，「CI 不重疊」是必要條件；即使點估計差異大，若 CI 仍重疊，降級傾向降低</li>
+    <li>單研究不適用：僅有一篇合格研究時，不評估 inconsistency（但仍可探討 subgroup 效應）</li>
+  </ul>
+</div>
+
+<h3>3.2 閾值選擇如何影響 Inconsistency 判斷（連續結果範例）</h3>
+<div class="ph-box ph-box-example">
+  <h4>案例：局部滲潤麻醉（Local Infiltration Analgesia）對膝關節置換術後疼痛的影響</h4>
+  <p>Forest plot 呈現 13 篇研究，整體 pooled estimate = -14.14 mm（VAS 100mm），I² = 94.5%</p>
+  <table>
+    <tr><th>閾值選擇</th><th>判斷邏輯</th><th>Inconsistency 結論</th></tr>
+    <tr><td>Null 閾值（0 mm）</td><td>13 篇中 12 篇點估計均在 Null 以下（負值，支持介入效益）；雖 I²=94.5%，但幾乎全部研究在閾值同側</td><td>✅ 不因 inconsistency 降級（即使 I² 很高）</td></tr>
+    <tr><td>MID 閾值（10 mm）</td><td>5 篇研究低於 MID（10mm，效果不重要），8 篇高於 MID（效果重要）；點估計分布在閾值兩側</td><td>⬇ 因 inconsistency 降級（pooled estimate 雖顯示重要效果，但個別研究結論不一）</td></tr>
+  </table>
+  <p>📝 <b>教學要點：</b>同一 meta-analysis，選用 Null 閾值不需降級，選用 MID 閾值（10mm）則須降級。此案例清楚說明閾值設定不只影響 imprecision 評估，同樣影響 inconsistency 評估。</p>
+</div>
+
+<h3>3.3 I² 統計量：輔助工具，非絕對標準</h3>
+<p>I² 描述效果估計變異性中由異質性（而非抽樣誤差）所佔的百分比。數值範圍 0%～100%。</p>
+<table>
+  <tr><th>I² 範圍</th><th>統計意涵</th><th>臨床解讀與行動建議</th></tr>
+  <tr><td>0%</td><td>抽樣誤差可完全解釋研究間差異</td><td>✅ 幾乎不存在 inconsistency；無需考慮降級</td></tr>
+  <tr><td>&lt; 30%</td><td>低度異質性</td><td>✅ 通常不需降級，輔以視覺標準確認</td></tr>
+  <tr><td>30%～60%</td><td>中度異質性</td><td>⚠ 需結合視覺標準及閾值判斷；可能需降級</td></tr>
+  <tr><td>&gt; 60%～100%</td><td>高度異質性</td><td>⚠ 傾向降級，但仍須視點估計相對閾值位置而定</td></tr>
+</table>
+<div class="ph-box ph-box-warning">
+  ⚠ <b>I² 的主要限制：</b>
+  <ul>
+    <li>窄 CI → 假性高 I²：若研究樣本數大、CI 窄，即使點估計差異不大，I² 也可能虛高</li>
+    <li>廣 CI → 假性低 I²：反之，若研究規模小、CI 寬，即使異質性存在，I² 也可能低估</li>
+    <li>I² 是比例，非絕對量：不反映效果量的絕對差異大小，僅反映異質性佔總變異的比例</li>
+    <li>極少需降兩級：因 inconsistency 降兩級的情況極罕見</li>
+  </ul>
+</div>
+
+<h2>四、Subgroup 效應的可信度評估</h2>
+<h3>4.1 基本原則：舉證責任在主張者</h3>
+<p>相對效果在大多數亞組間傾向一致，真實的 subgroup 效應實為少數。Core GRADE 預設懷疑 subgroup 效應的態度，舉證責任落在主張效應存在者身上。然而真實的亞組效應確實存在，需要可靠的方法加以辨別。</p>
+
+<h3>4.2 判斷 Subgroup 效應可信度的關鍵標準</h3>
+<table>
+  <tr><th>#</th><th>判斷標準</th><th>可信度較高的條件</th><th>可信度較低的條件</th></tr>
+  <tr><td>①</td><td>統計交互作用（Test of interaction）</td><td>交互作用 P 值小（偶然機率低）</td><td>P 值大（偶然即可解釋）；或因多重檢定而失去可靠性</td></tr>
+  <tr><td>②</td><td>A priori 假說及方向性</td><td>事先預設假說，且效果方向與預期一致</td><td>Post hoc 探索；無方向性預設；大量假說同時測試</td></tr>
+  <tr><td>③</td><td>Within vs. Between study 比較</td><td>Within study 比較（同一研究內比較）→ 更具說服力</td><td>Between study 比較 → 可信度大幅下降</td></tr>
+  <tr><td>④</td><td>假說數量</td><td>少數（≤3 個）精選假說</td><td>大量假說（如 12 個）→ 偽陽性機率高</td></tr>
+  <tr><td>⑤</td><td>生物學合理性</td><td>有充分的前期生物學、病理生理學或相關研究支撐</td><td>缺乏生物學機制解釋；純屬事後統計發現</td></tr>
+</table>
+
+<h3>4.3 正式評估工具：ICEMAN</h3>
+<p>ICEMAN（Instrument for assessing the Credibility of Effect Modification ANalyses）是目前最廣泛使用的 subgroup 效應可信度評估工具，整合上述所有標準。官方網站：www.iceman.help</p>
+<table>
+  <tr><th>ICEMAN 可信度等級</th><th>說明與行動</th><th>呈現方式</th></tr>
+  <tr><td>Low / Very Low（低 / 極低可信度）</td><td>Subgroup 效應不可信 → 不拆分亞組，提供全體研究的整合摘要，若有 inconsistency 則對全體降級</td><td>單一整體結果</td></tr>
+  <tr><td>Moderate（中度可信度）</td><td>接近低/中度邊界時：可同時呈現整體與亞組結果；或選一為主、另一在文字簡述。須坦承「close-call」性質</td><td>雙軌呈現或擇一</td></tr>
+  <tr><td>High（高可信度）</td><td>Subgroup 效應可信 → 各亞組建立獨立 PICO，分別呈現結果，分別評估 5 個 GRADE 降級領域</td><td>各亞組獨立呈現</td></tr>
+</table>
+
+<div class="ph-box ph-box-example">
+  <h4>臨床案例：β 阻斷劑心率降低程度與心衰竭死亡率</h4>
+  <p>研究假說：β 阻斷劑造成的心率降低程度越大，心衰竭患者的死亡率降低越多（心率每降低 5 bpm，死亡風險降低 18%）。</p>
+  <table>
+    <tr><th>ICEMAN 評估面向</th><th>本案例分析</th></tr>
+    <tr><td>交互作用 P 值</td><td>P = 0.006（統計上顯著）</td></tr>
+    <tr><td>假說預設性</td><td>有預先設定假說 ✓</td></tr>
+    <tr><td>假說數量</td><td>共測試 12 個假說 ✗（多重檢定問題，即使 P = 0.006 也可疑）</td></tr>
+    <tr><td>比較類型</td><td>Between study 比較（不同研究心率下降幅度不同）✗ 不如 within study 有說服力</td></tr>
+    <tr><td>生物學合理性</td><td>心率降低→心肌耗氧降低→死亡率降低，生物機制合理 ✓</td></tr>
+    <tr><td>ICEMAN 綜合結論</td><td>中度可信度（Moderate credibility）→ 效果修飾因子為連續變數，採 meta-regression 分析更佳</td></tr>
+  </table>
+</div>
+
+<h2>五、完整判斷流程（Inconsistency 評估決策樹）</h2>
+<table>
+  <tr><td><b>Step 1</b></td><td>選擇適當效果指標：二元結果 → 相對效果（RR/OR）；連續結果 → 絕對差值（MD）</td></tr>
+  <tr><td><b>Step 2</b></td><td>確認是否預先設定 A priori 方向性假說（情境 3）？若有，列出並備用</td></tr>
+  <tr><td><b>Step 3</b></td><td>視覺檢視 forest plot：點估計差異、CI 重疊程度、點估計相對於閾值位置</td></tr>
+  <tr><td><b>Step 4</b></td><td>輔助參考 I²：I² < 30% 通常安全；> 30% 需結合視覺標準；不可單獨依賴 I²</td></tr>
+  <tr><td><b>Step 5</b></td><td>若判斷存在重要 inconsistency → 檢視 a priori 假說，評估 subgroup 效應可信度（ICEMAN）</td></tr>
+  <tr><td><b>Step 6</b></td><td>若無法以 subgroup 解釋 → 整體降一級（極少降兩級）</td></tr>
+</table>
+
+<h2>六、常見錯誤與陷阱（Critical Pitfalls）</h2>
+<table>
+  <tr><th>常見錯誤</th><th>正確做法</th></tr>
+  <tr><td>❌ 以絕對效果（RD）判斷二元結果的 inconsistency</td><td>✅ 二元結果應以相對效果（RR/HR/OR）評估一致性</td></tr>
+  <tr><td>❌ I² 高即自動降一級</td><td>✅ 即使 I² = 95%，若絕大多數點估計在閾值同側，仍可不降級（Null 閾值情境）</td></tr>
+  <tr><td>❌ 接受 post hoc subgroup analysis 作為降級依據</td><td>✅ 僅事先設定的方向性假說之 subgroup analysis 具可信度</td></tr>
+  <tr><td>❌ Between study 比較等同 within study 比較</td><td>✅ Within study 比較遠優於 between study；後者可信度大幅下降</td></tr>
+  <tr><td>❌ 大量 subgroup hypothesis 測試，P < 0.05 即接受</td><td>✅ ≤ 3 個 a priori 方向性假說為原則</td></tr>
+  <tr><td>❌ PICO 異質性等同 results inconsistency</td><td>✅ 降級的是「結果的不一致」，非「PICO 的異質性」</td></tr>
+</table>
+
+<h2>七、與第二篇（Imprecision）的整合應用</h2>
+<table>
+  <tr><th>面向</th><th>Imprecision（第二篇）</th><th>Inconsistency（本篇）</th></tr>
+  <tr><td>關注對象</td><td>單一 meta-analysis 結果的精確性（CI 寬窄）</td><td>跨研究結果的一致程度</td></tr>
+  <tr><td>主要工具</td><td>CI 與閾值（MID/Null）的關係；OIS</td><td>Forest plot 視覺標準；I²（輔助）；ICEMAN</td></tr>
+  <tr><td>閾值的角色</td><td>決定 CI 是否需要降級</td><td>決定個別研究點估計是否分布在同側</td></tr>
+</table>
+
+<p><b>來源文獻：</b>Guyatt G, Schandelmaier S, et al. Core GRADE 3: rating certainty of evidence—assessing inconsistency. BMJ 2025;389:e081905　｜　ICEMAN 工具：Schandelmaier S, et al. CMAJ 2020;192:E901-6. www.iceman.help</p>
+
+<div class="ph-footer-cite">本文件依 BMJ Core GRADE 系列論文整理，僅供臨床藥師教育訓練使用</div>
+</div>
+`,
+  riskofbias4: `<div class="pdf-html-content">
+<div class="ph-header">
+  <h1>Core GRADE 系列教學文件 第四篇：偏誤風險（Risk of Bias）、發表偏誤（Publication Bias）與確定性升級</h1>
+  <div class="ph-authors">臨床藥師 EBM 工作坊</div>
+  <div class="ph-doi">來源：Guyatt et al., BMJ 2025;389:e083864　繁體中文整理版</div>
+</div>
+
+<div class="ph-box ph-box-summary">
+  <h3>📌 核心重點摘要（Summary Points）</h3>
+  <ul>
+    <li><b>偏誤風險評估：</b>先將個別研究分類為低或高偏誤風險，再整合判斷是否降低整體確定性</li>
+    <li><b>高偏誤風險主導：</b>若高偏誤研究佔主導地位（> 55-65% 權重），通常應降低確定性</li>
+    <li><b>低偏誤研究充足且結果差異大：</b>僅採用低偏誤研究結果，不降級</li>
+    <li><b>低偏誤研究充足且結果相似：</b>納入全部研究，不降級</li>
+    <li><b>發表偏誤：</b>全部小型且由業界贊助的研究應懷疑；可使用漏斗圖或統計方法評估</li>
+    <li><b>升級（Rating Up）：</b>嚴謹 NRSI 顯示大效果（RR > 2 或 < 0.5）或劑量反應梯度，可考慮升一至兩級</li>
+  </ul>
+</div>
+
+<h2>一、偏誤風險（Risk of Bias）概念架構</h2>
+<h3>1.1 定義</h3>
+<p>偏誤（Bias）定義為對特定族群之介入措施在特定結果上的真實效果的系統性偏差（systematic deviation）。RCT 與 NRSI 均可能因設計或執行限制而產生偏誤。Core GRADE 使用者在高偏誤風險研究主導效果估計時，通常應降低整體確定性。</p>
+
+<h3>1.2 RCT 起始確定性（High）vs. NRSI 起始確定性（Low）</h3>
+<p>RCT 從高確定性開始，NRSI 因普遍存在殘差干擾（residual confounding）從低確定性開始。NRSI 若有進一步偏誤風險問題，可從低降至極低。</p>
+
+<h2>二、個別研究偏誤風險評估工具</h2>
+<h3>2.1 RCT 評估工具</h3>
+<table>
+  <tr><th>工具</th><th>特色</th><th>Core GRADE 評價</th></tr>
+  <tr><td>RoB 2（Cochrane）</td><td>5 個領域；涵蓋集群 RCT 與交叉試驗；信號問題+演算法</td><td>⚠ 較複雜、評分者間可信度低、實施困難；適合進階使用者</td></tr>
+  <tr><td>ROBUST-RCT</td><td>6 核心項目（隨機序列生成、分配隱蔽、受試者盲化、醫護人員盲化、結果評估者盲化、遺漏數據）+8 選擇性項目</td><td>✅ Core GRADE 首選：簡潔、嚴謹、易用；與 Core GRADE 原則最一致</td></tr>
+  <tr><td>CLARITY 工具 / CASP / JBI / NICE / SIGN</td><td>各有輕重；部分包含在 Core GRADE 歸類於 indirectness 或 imprecision 的項目</td><td>⚠ 注意雙重計算：若工具含 indirectness/imprecision 項目，不應再在 risk of bias 中計算</td></tr>
+</table>
+
+<h4>RCT 偏誤風險評估的核心項目（Box 1 整理）</h4>
+<table>
+  <tr><th>重要性</th><th>評估項目</th></tr>
+  <tr><td>🔴 最重要項目</td><td>隨機分配序列產生；分配隱蔽；受試者盲化；醫護人員盲化；數據收集者盲化；結果評估者盲化；數據分析者盲化；遺漏結果數據</td></tr>
+  <tr><td>🟡 次要項目</td><td>共同介入不平衡；結果評估差異；追蹤時間/頻率/強度差異；偏離 ITT 分析；選擇性結果報告；提前終止（早期效益停止）</td></tr>
+</table>
+
+<h3>2.2 NRSI 評估工具</h3>
+<p>NRSI 因組間預後因子分佈不平衡（residual confounding）而起始為低確定性。</p>
+<table>
+  <tr><th>工具</th><th>特色</th><th>Core GRADE 評價</th></tr>
+  <tr><td>Newcastle-Ottawa Scale（NOS）及 CLARITY 修改版</td><td>相對簡單；世代研究與病例對照研究各有版本</td><td>✅ 適合 Core GRADE：簡潔實用；常用閾值：≥2 個高偏誤項目 → 整體高偏誤</td></tr>
+  <tr><td>ROBINS-I v1 / v2</td><td>7 個領域；信號問題+演算法；殘差干擾納入評估流程</td><td>⚠ 常被誤用；耗時；可用性差</td></tr>
+</table>
+
+<h3>2.3 特殊情境：Case Series 與 Single Arm 試驗</h3>
+<table>
+  <tr><th>情境</th><th>Core GRADE 處理方式</th></tr>
+  <tr><td>一般 Case Series / Single Arm Trial</td><td>缺乏同期對照 → 幾乎永遠從低降至極低確定性；通常無需正式偏誤評估</td></tr>
+  <tr><td>歷史性外部對照的 Single Arm Trial</td><td>類似世代研究但無法進行校正分析 → 幾乎永遠為高偏誤風險</td></tr>
+  <tr><td>特殊案例：危害僅發生於接受介入者（如手術併發症）</td><td>✅ 例外：對照組事件率趨近零 → 設計良好的單臂研究可提供高確定性的危害估計。範例：大腸鏡出血 1.64/1000，穿孔 0.85/1000（97,000 人資料庫研究）</td></tr>
+</table>
+
+<h3>2.4 個別研究的偏誤風險閾值判斷</h3>
+<p>偏誤風險為一連續量（從極小到極嚴重），Core GRADE 為求簡化，將個別研究歸類為低或高偏誤風險兩類。重要提示：</p>
+<ul>
+  <li>不同結果可能有不同偏誤風險：如遺漏數據偏誤對「生活品質」（長期追蹤難）高於「存活」（易追蹤）；盲化對主觀結果影響大，對死亡率則幾乎無影響</li>
+  <li>閾值無黃金標準：1 個高偏誤項目 vs. 2 個或更多均可接受，關鍵是明確說明選擇依據</li>
+  <li>Close call 情境：例如心衰竭試驗（許多強效共同介入）vs. 多發性硬化症（少有強效共同介入）——同樣的未盲化，臨床意義截然不同</li>
+</ul>
+
+<h2>三、跨研究整體偏誤風險評估與降級決策</h2>
+<h3>3.1 決策流程（四種情境）</h3>
+<table>
+  <tr><th>#</th><th>情境</th><th>判斷標準</th><th>行動</th></tr>
+  <tr><td>①</td><td>高偏誤研究主導證據體</td><td>高偏誤研究權重 > 65%（或 ≥ 55%）</td><td>⬇ 納入所有研究 → 降低確定性（先確認偏誤方向）</td></tr>
+  <tr><td>②</td><td>有充足低偏誤研究（≥ 35-45%）且兩組結果差異大</td><td>低偏誤 vs. 高偏誤研究交互作用 P 值顯著</td><td>✅ 僅採用低偏誤研究結果作為最佳估計 → 不降低確定性</td></tr>
+  <tr><td>③</td><td>有充足低偏誤研究（≥ 35-45%）且兩組結果相似</td><td>低偏誤 vs. 高偏誤研究交互作用 P 值不顯著</td><td>✅ 納入所有研究（高偏誤研究實際上偏誤極小）→ 不降低確定性</td></tr>
+  <tr><td>④</td><td>偏誤方向支持結論</td><td>偏誤方向與實際效果方向一致（反強化結論）</td><td>✅ 偏誤強化推論力 → 不降低確定性（即使形式上為高偏誤）</td></tr>
+</table>
+
+<h3>3.2 偏誤方向（Direction of Bias）的考量</h3>
+<table>
+  <tr><th>情境</th><th>偏誤方向分析</th><th>降級決策</th></tr>
+  <tr><td>研究顯示效果，但偏誤會使效果縮小</td><td>真實效果可能比觀察到的更大 → 偏誤反而低估真實效果</td><td>✅ 無需降級（偏誤佐證效果存在）</td></tr>
+  <tr><td>研究顯示無效果，但偏誤會使效果增大</td><td>真實效果可能比觀察到的更小 → 偏誤強化「無差異」的結論</td><td>✅ 無需降級（偏誤佐證無效果）</td></tr>
+  <tr><td>偏誤可能造成或放大觀察到的效果</td><td>高偏誤研究可能虛增效果（如開放標籤試驗的知情偏誤）</td><td>⬇ 須降級</td></tr>
+</table>
+
+<div class="ph-box ph-box-example">
+  <h4>臨床案例：Primaquine 用於瘧疾傳播預防</h4>
+  <p>Meta-analysis 顯示：Primaquine 未增加不良事件（OR 0.79，95% CI 0.63-1.42）。研究未盲化 → 形式上高偏誤風險。</p>
+  <p><b>偏誤方向分析：</b>臨床醫師知道病患額外服藥 → 更傾向將症狀歸因於藥物副作用 → 未盲化會高估 primaquine 的不良事件 → 偏誤方向使 primaquine 危害看起來更大。實際結果卻顯示無危害，代表真實情況更安全 → 偏誤方向強化「無危害」的結論 ✅ 不降級</p>
+</div>
+
+<table>
+  <tr><th>案例</th><th>偏誤風險分布</th><th>結果差異</th><th>決策</th></tr>
+  <tr><td>Azithromycin 治療牙周炎（出血探針）</td><td>高偏誤：85%；低偏誤：15%（僅 1 篇，n=28，CI 極寬）</td><td>低偏誤研究數據不足以判斷差異</td><td>⬇ 納入全部研究，降級（高偏誤研究主導）</td></tr>
+  <tr><td>兒童飲食介入（蔬菜攝取量）</td><td>高偏誤：69%（10 篇）；低偏誤：31%（5 篇）</td><td>（同樣主導情境，未分析差異）</td><td>⬇ 納入全部研究，降級</td></tr>
+  <tr><td>類固醇治療 CAP（住院天數）</td><td>低偏誤：69%（3 篇，1288 人）；高偏誤：31%（6 篇，359 人）</td><td>差異大：低偏誤 -1.00 天 vs. 高偏誤 -4.41 天（P=0.045 for interaction）</td><td>✅ 僅採用低偏誤研究，不降級</td></tr>
+  <tr><td>牛/人初乳用於早產兒（達到完全餵食時間）</td><td>低偏誤：54%（4 篇，131 人）；高偏誤：46%（2 篇，154 人）</td><td>結果相似：-4.19 天 vs. -3.47 天（P=0.85 for interaction）</td><td>✅ 納入全部研究，不降級</td></tr>
+</table>
+
+<h2>四、發表偏誤（Publication Bias）</h2>
+<h3>4.1 定義與原因</h3>
+<p>發表偏誤指因研究結果而選擇性不發表（通常為陰性結果），導致 pooled estimate 高估效果。NRSI 的發表偏誤效應大於 RCT。</p>
+<table>
+  <tr><th>原因</th><th>說明</th></tr>
+  <tr><td>研究者不投稿</td><td>認為陰性結果對期刊不具吸引力</td></tr>
+  <tr><td>期刊拒絕陰性結果</td><td>編輯與審稿者偏好具有統計顯著性的結果</td></tr>
+  <tr><td>業界贊助者壓制</td><td>❗ 最危險：商業利益驅動壓制負面結果；可能誇大效果達 115%（如 Reboxetine 案例）</td></tr>
+</table>
+
+<h3>4.2 偵測方法</h3>
+<table>
+  <tr><th>方法</th><th>使用時機與優點</th><th>限制</th></tr>
+  <tr><td>直接文獻查核（Registry / FDA 資料庫）</td><td>已知未發表研究且可取得結果 → 確定性發表偏誤證據（如 FDA 抗憂鬱藥試驗：36 篇陰性中 22 篇未發表）</td><td>需要掌握特定未發表研究的資訊</td></tr>
+  <tr><td>漏斗圖（Funnel Plot）視覺判讀</td><td>對稱倒三角形 → 無偏誤；右下象限缺損 → 懷疑偏誤</td><td>主觀性；也可能反映小研究效應</td></tr>
+  <tr><td>統計檢定（Egger's、Begg's 等）</td><td>需要 ≥ 10 篇研究；數學化量測漏斗圖不對稱</td><td>偽陽性與偽陰性率均受批評</td></tr>
+  <tr><td>臨床懷疑指標</td><td>❗ 高懷疑指標：所有研究均為小型 + 多數/全部由業界贊助</td><td>定性判斷；無定量閾值；仍可合理降級</td></tr>
+</table>
+
+<div class="ph-box ph-box-warning">
+  Core GRADE 標準用語：<b>Undetected（未偵測到）</b>：無發表偏誤的證據 → 不降級。<b>Strongly suspected（強烈懷疑）</b>：有證據顯示發表偏誤 → 降一級。⚠ 即使沒有確切未發表研究的證據，若全部研究均為小型且業界贊助，仍可合理降級。
+</div>
+
+<h3>4.3 發表偏誤判斷流程</h3>
+<table>
+  <tr><td><b>Step 1</b></td><td>是否多數/全部研究規模小且由業界贊助？是 → 直接降低確定性</td></tr>
+  <tr><td><b>Step 2</b></td><td>是否可進行統計發表偏誤分析（≥ 10 篇）？視覺判讀漏斗圖 + 統計檢定</td></tr>
+  <tr><td><b>Step 3</b></td><td>是否有已知未發表研究的記錄？有且樣本數足夠影響整體結果 → 降低確定性</td></tr>
+</table>
+
+<h3>4.4 選擇性結果報告（Selective Outcome Reporting）的歸屬</h3>
+<table>
+  <tr><th>類型</th><th>評估歸屬</th></tr>
+  <tr><td>某些研究對特定結果未報告（負面結果沉默）</td><td>→ 歸入 Publication Bias 領域</td></tr>
+  <tr><td>研究有報告但從多個可能估計中選擇最佳結果</td><td>→ 歸入 Risk of Bias（個別研究層面）；NRSI 尤其需注意</td></tr>
+</table>
+
+<h2>五、確定性升級（Rating Up Certainty）</h2>
+<h3>5.1 基本前提</h3>
+<p>NRSI 起始為低確定性。若 NRSI 未因特定偏誤問題降至極低，且效果估計已足夠精確，則可考慮升級。兩種情境可升級：大效果量與劑量反應梯度（RCT 通常不適用升級）。</p>
+
+<h3>5.2 大效果量（Large Magnitude of Effect）</h3>
+<table>
+  <tr><th>效果量閾值（RR / OR / HR）</th><th>升級幅度</th><th>理論依據</th></tr>
+  <tr><td>RR > 2.0 或 RR < 0.5</td><td>⬆ 考慮升一級（Low → Moderate）</td><td>模型研究顯示：能解釋此程度效果的干擾因子存在機率低</td></tr>
+  <tr><td>RR > 5.0 或 RR < 0.2</td><td>⬆⬆ 考慮升兩級（Low → High）</td><td>能解釋此程度效果的干擾因子存在機率極低</td></tr>
+</table>
+<div class="ph-box ph-box-example">
+  <h4>臨床案例：嬰兒睡眠姿勢與嬰兒猝死症（SIDS）</h4>
+  <p>觀察性研究 Meta-analysis：俯臥 vs. 仰臥 OR = 4.46（95% CI 2.98-6.68）→ OR > 2 且 < 5 → 考慮升一級（Low → Moderate）</p>
+</div>
+<p><b>其他支持升級的因素（Strong 情境）：</b>快速起效（胰島素治療 DKA；腎上腺素治療過敏性休克）；不治療必然惡化（全人工髖關節置換治療嚴重髖關節炎）；幾乎無需正式觀察研究的情境（心肺復甦、透析治療末期腎病、容積補充治療脫水）</p>
+
+<h3>5.3 劑量反應梯度（Dose-Response Gradient）</h3>
+<p>劑量或介入程度的遞增與效果遞增（或遞減）之間的關係，支持因果性，可考慮升級。</p>
+<div class="ph-box ph-box-example">
+  <h4>臨床案例：攝護腺切除術後補救性放射治療</h4>
+  <p>Meta-analysis：每增加 1 Gray 劑量 → 無復發存活率增加 2% → 明確的劑量反應梯度 → 支持因果關係 → 考慮升一級</p>
+</div>
+<div class="ph-box ph-box-warning">
+  ⚠ <b>升級的陷阱：混淆的劑量反應梯度</b><br>反例：咖啡攝取量與胰臟癌案例系列——Case-control 研究顯示劑量反應梯度，但實際原因是吸菸→胰臟癌（真實劑量反應），吸菸者更常喝咖啡（混淆）。因此咖啡的「劑量反應梯度」是假性的，不應升級。<b>原則：</b>若懷疑介入措施本身非真正因果因子（受另一混淆因素連帶），不應升級
+</div>
+
+<h3>5.4 升級決策判斷表</h3>
+<table>
+  <tr><th>#</th><th>情境</th><th>條件</th><th>行動</th></tr>
+  <tr><td>①</td><td>NRSI 已降至極低</td><td>因 NRSI 特有偏誤降至 Very low</td><td>✘ 不適用升級（偏誤問題未解決）</td></tr>
+  <tr><td>②</td><td>大效果量（RR > 2 或 < 0.5）</td><td>NRSI 嚴謹、無特定偏誤問題、CI 已排除不重要效果</td><td>⬆ 考慮升一級</td></tr>
+  <tr><td>③</td><td>極大效果量（RR > 5 或 < 0.2）</td><td>同②</td><td>⬆⬆ 考慮升兩級</td></tr>
+  <tr><td>④</td><td>可信的劑量反應梯度</td><td>排除混淆因素的劑量反應梯度</td><td>⬆ 考慮升一級；若同時有大效果量可進一步升級</td></tr>
+</table>
+
+<h2>六、常見錯誤與陷阱</h2>
+<table>
+  <tr><th>常見錯誤</th><th>正確做法</th></tr>
+  <tr><td>❌ 使用含 indirectness/imprecision 項目的工具，並在 risk of bias 中計算</td><td>✅ 僅以 risk of bias 工具評估偏誤；avoid double counting</td></tr>
+  <tr><td>❌ 單憑 1 個高偏誤項目即降級全部研究</td><td>✅ 閾值應視情境決定，需明確說明並考慮 close call 情境</td></tr>
+  <tr><td>❌ 同一研究所有結果使用同一偏誤評估</td><td>✅ 不同結果偏誤風險可能不同，應分別評估</td></tr>
+  <tr><td>❌ 忽略偏誤方向，所有高偏誤研究均降級</td><td>✅ 若偏誤方向強化結論，可不降級</td></tr>
+  <tr><td>❌ 漏斗圖不對稱即確認發表偏誤</td><td>✅ 漏斗圖不對稱有多種解釋，應結合其他證據判斷</td></tr>
+  <tr><td>❌ RCT 大效果量也嘗試升級</td><td>✅ 升級機制主要針對 NRSI；RCT 從 High 起始，升級邏輯不適用</td></tr>
+  <tr><td>❌ NRSI 已降至極低仍考慮升級</td><td>✅ 升級的前提是 NRSI 未因特定偏誤問題降至極低</td></tr>
+</table>
+
+<h2>七、快速查核表（Quick Reference Checklist）</h2>
+<p><b>【Risk of Bias 查核】</b></p>
+<ul>
+  <li>□ 已選定適合的偏誤評估工具？</li>
+  <li>□ 各結果是否分別評估偏誤？</li>
+  <li>□ 各研究已歸類為低或高偏誤風險？閾值與依據已明確說明？</li>
+  <li>□ 高偏誤研究占比是否進入四種情境判斷？</li>
+  <li>□ 偏誤方向是否強化現有結論？</li>
+</ul>
+<p><b>【Publication Bias 查核】</b></p>
+<ul>
+  <li>□ 研究是否全為小型且業界贊助？</li>
+  <li>□ 研究數 ≥ 10 篇？可進行統計分析及漏斗圖判讀？</li>
+  <li>□ 是否有已知未發表研究記錄？</li>
+</ul>
+<p><b>【Rating Up 查核（NRSI 專用）】</b></p>
+<ul>
+  <li>□ NRSI 是否未降至極低？</li>
+  <li>□ RR > 2.0 / < 0.5？考慮升一級；RR > 5.0 / < 0.2？考慮升兩級</li>
+  <li>□ 是否有可信的劑量反應梯度？已排除混淆因素的可能？</li>
+</ul>
+
+<p><b>來源文獻：</b>Guyatt G, Wang Y, et al. Core GRADE 4: rating certainty of evidence—risk of bias, publication bias, and reasons for rating up certainty. BMJ 2025;389:e083864　｜　ROBUST-RCT 工具：Wang Y, et al. BMJ 2025;388:e081199.</p>
+
+<div class="ph-footer-cite">本文件依 BMJ Core GRADE 系列論文整理，僅供臨床藥師教育訓練使用</div>
+</div>
+`,
+};
+
+function showRefModal(contentKey, title) {
+  const existing = document.getElementById('refModal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'refModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#fdfbf6;border:1px solid #e0dccf;border-radius:14px;max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+      <div style="padding:14px 20px;border-bottom:1px solid #e0dccf;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#f5f1e8;">
+        <span style="font-weight:700;color:#1a1a2e;font-size:14px;">📖 ${title}</span>
+        <button onclick="document.getElementById('refModal').remove()" style="background:#e74c3c;border:none;color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">✕ 關閉</button>
+      </div>
+      <div style="overflow-y:auto;padding:24px 28px;flex:1;">${REF_CONTENT[contentKey]}</div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+}
+
+function openOverviewPDF() { showRefModal('overview1', 'Core GRADE 1：方法概述'); }
+function openPDF() { showRefModal('indirectness5', 'Core GRADE 5：間接性 Indirectness'); }
+function openImpPDF() { showRefModal('imprecision2', 'Core GRADE 2：不精確性 Imprecision'); }
+function openIncPDF() { showRefModal('inconsistency3', 'Core GRADE 3：不一致性 Inconsistency'); }
+function openRobPDF() { showRefModal('riskofbias4', 'Core GRADE 4：偏誤風險與升級'); }
+</script>
+</body>
+</html>
