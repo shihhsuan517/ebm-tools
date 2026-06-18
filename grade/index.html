@@ -17,20 +17,21 @@
     --orange: #e67e22;
     --red: #e74c3c;
     --text: #e8eaf0;
-    --muted: #8891b4;
+    --muted: #aab4d4;
     --tag-bg: #2a2f45;
-    --high-col: #1a4a2e;
-    --mod-col: #2a3a1a;
-    --low-col: #3a2e10;
-    --vlow-col: #3a1a1a;
+    /* 確定性等級配色：採用紅黃綠藍直覺系統，強度依等級遞增，方便記憶 */
+    --high-col: #1b4d3e;   /* 深綠：High，最值得信賴 */
+    --mod-col: #3a4d1b;    /* 橄欖綠黃：Moderate */
+    --low-col: #4d3a1b;    /* 橙棕：Low */
+    --vlow-col: #4d1b1b;   /* 深紅：Very Low，最不確定 */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     min-height: 100vh;
   }
   /* ── Header ── */
@@ -39,10 +40,20 @@
     border-bottom: 1px solid var(--border);
     padding: 20px 24px 16px;
     position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   }
   header h1 { font-size: 18px; font-weight: 700; letter-spacing: .5px; color: var(--text); }
   header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .progress-bar { display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; }
+  .header-left { flex: 1; min-width: 200px; }
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    background: var(--card); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 8px; text-decoration: none;
+    transition: all .15s; white-space: nowrap; flex-shrink: 0;
+  }
+  .home-btn:hover { border-color: var(--accent2); background: var(--surface); transform: translateY(-1px); }
+  .progress-bar { display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; width: 100%; }
   .step-dot {
     height: 6px; flex: 1; min-width: 20px; border-radius: 3px;
     background: var(--border); transition: background .3s;
@@ -75,13 +86,14 @@
   /* ── Cert badge ── */
   .cert-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
-    border: 1px solid; margin: 2px;
+    padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 800;
+    border: 2px solid; margin: 2px; letter-spacing: .3px;
   }
-  .cert-high { background: var(--high-col); color: #4cd98c; border-color: #2ecc71; }
-  .cert-mod  { background: var(--mod-col);  color: #a8d060; border-color: #7ab648; }
-  .cert-low  { background: var(--low-col);  color: #f4c060; border-color: #e6a020; }
-  .cert-vlow { background: var(--vlow-col); color: #f07070; border-color: #e74c3c; }
+  /* 長者友善高對比配色：飽和實色底 + 接近純黑文字，避免深色底配中亮度文字 */
+  .cert-high { background: #4ade80; color: #0a2818; border-color: #1b7a4a; }
+  .cert-mod  { background: #d4e157; color: #2d3508; border-color: #8a9a1f; }
+  .cert-low  { background: #ffb74d; color: #3a2200; border-color: #c97a00; }
+  .cert-vlow { background: #ff6b6b; color: #3a0a0a; border-color: #c62828; }
   /* ── Main content ── */
   main { flex: 1; overflow-y: auto; padding: 24px; }
   .screen { display: none; max-width: 820px; margin: 0 auto; }
@@ -97,7 +109,7 @@
   /* ── Info box ── */
   .info-box {
     border-radius: 8px; padding: 12px 14px; margin: 10px 0;
-    border-left: 3px solid; font-size: 13px; line-height: 1.6;
+    border-left: 3px solid; font-size: 14.5px; line-height: 1.75;
   }
   .info-blue  { background: #1a2240; border-color: var(--accent); }
   .info-green { background: #12261c; border-color: var(--green); }
@@ -141,11 +153,11 @@
   }
   .domain-row:hover { background: var(--card); }
   .domain-name { font-size: 13px; font-weight: 600; flex: 1; }
-  .domain-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--tag-bg); color: var(--muted); }
-  .domain-tag.active { background: #1e2a50; color: var(--accent); }
-  .domain-tag.warn   { background: #2e1c0a; color: var(--orange); }
-  .domain-tag.danger { background: #2a0f0f; color: var(--red); }
-  .domain-tag.boost  { background: #0f2a1a; color: var(--green); }
+  .domain-tag { font-size: 13px; font-weight: 600; padding: 4px 11px; border-radius: 10px; background: #3a4060; color: #e8eaf0; }
+  .domain-tag.active { background: #4d7fd6; color: #ffffff; }
+  .domain-tag.warn   { background: #ffb74d; color: #3a2200; font-weight: 700; }
+  .domain-tag.danger { background: #ff6b6b; color: #3a0a0a; font-weight: 700; }
+  .domain-tag.boost  { background: #4ade80; color: #0a2818; font-weight: 700; }
   /* ── Dropdown select ── */
   select {
     background: var(--surface); border: 1px solid var(--border);
@@ -183,9 +195,9 @@
   .final-vlow { background: var(--vlow-col); border-color: var(--red); }
   .final-vlow .cert-level { color: #f07070; }
   /* ── Table ── */
-  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
-  th { background: var(--surface); padding: 8px 10px; text-align: left; border: 1px solid var(--border); color: var(--accent); font-weight: 600; }
-  td { padding: 8px 10px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0; }
+  th { background: #2a3155; padding: 10px 12px; text-align: left; border: 1px solid var(--border); color: #aecbff; font-weight: 700; font-size: 14px; }
+  td { padding: 10px 12px; border: 1px solid var(--border); color: #c8cde0; vertical-align: top; line-height: 1.7; }
   tr:hover td { background: var(--surface); }
   /* ── Tooltip ── */
   .tip {
@@ -257,8 +269,14 @@
 <body>
 
 <header>
-  <h1>⚕ Core GRADE 互動評分教學工具</h1>
-  <p>依照 Guyatt et al., BMJ 2025 — 逐步完成每個結果變相的證據確定性評分</p>
+  <div class="header-left">
+    <h1>⚕ Core GRADE 互動評分教學工具</h1>
+    <p>依照 Guyatt et al., BMJ 2025 — 逐步完成每個結果變相的證據確定性評分</p>
+  </div>
+  <a class="home-btn" href="https://shihhsuan517.github.io/ebm-tools/">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    回首頁
+  </a>
   <div class="progress-bar" id="progressBar"></div>
 </header>
 
