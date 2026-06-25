@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRADE / ICEMAN / AMSTAR 2 教學工具 — 學習者感受問卷</title>
+<style>
+  :root{
+    --bg:#0F1B1D;
+    --panel:#142628;
+    --panel-2:#0F2123;
+    --line:#23393B;
+    --ink:#EAF2F0;
+    --muted:#8FA9A6;
+    --muted-2:#5E7A77;
+    --high:#4C9A6B;
+    --mod:#D9A23B;
+    --low:#C97A3D;
+    --vlow:#B5485A;
+    --accent:#5FB89A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    line-height:1.6;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:28px 18px 40px;}
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:"Noto Serif TC",Georgia,serif;
+    font-size:26px;
+    font-weight:600;
+    margin:0 0 6px;
+    color:#fff;
+  }
+  .sub{color:var(--muted);font-size:14px;}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .card h2{
+    font-family:"Noto Serif TC",Georgia,serif;
+    font-size:16px;
+    margin:0 0 4px;
+    color:#fff;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  .card h2 .tag{
+    font-size:11px;
+    color:var(--muted);
+    font-family:"Noto Sans TC",sans-serif;
+    font-weight:400;
+    letter-spacing:.05em;
+  }
+  .card p.desc{color:var(--muted);font-size:13px;margin:4px 0 16px;}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px;}
+  input[type=text]{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-size:15px;
+  }
+  .row-2{display:flex;gap:12px;}
+  .row-2 > div{flex:1;}
+  .timepoint{display:flex;gap:8px;margin-top:6px;}
+  .timepoint button{
+    flex:1;
+    padding:9px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--muted);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .timepoint button.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#06231b;
+    font-weight:600;
+  }
+  .q{
+    padding:16px 0;
+    border-top:1px solid var(--line);
+  }
+  .q:first-of-type{border-top:none;padding-top:6px;}
+  .q .qtext{font-size:14.5px;color:var(--ink);margin-bottom:12px;}
+  .qnum{color:var(--muted-2);font-size:13px;margin-right:6px;}
+  .scale{
+    display:flex;
+    justify-content:space-between;
+    gap:6px;
+  }
+  .scale label.opt{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    font-size:11px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .scale input[type=radio]{
+    width:20px;height:20px;
+    accent-color:var(--accent);
+    margin:0;
+  }
+  .endcap{font-size:11px;color:var(--muted-2);display:flex;justify-content:space-between;margin-top:8px;}
+  .submit-bar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(to top, var(--bg) 70%, transparent);
+    padding:18px 0 4px;
+  }
+  button.primary{
+    width:100%;
+    padding:14px;
+    border-radius:10px;
+    border:none;
+    background:var(--accent);
+    color:#06231b;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  button.primary:disabled{opacity:.4;cursor:not-allowed;}
+  .hint{font-size:12px;color:var(--muted-2);text-align:center;margin-top:8px;}
+
+  /* results */
+  #results{display:none;}
+  .gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;}
+  .gauge-score{
+    font-family:"Noto Serif TC",Georgia,serif;
+    font-size:42px;
+    font-weight:700;
+    margin-top:-58px;
+    color:#fff;
+  }
+  .gauge-label{font-size:13px;color:var(--muted);margin-top:2px;}
+  .level-pill{
+    display:inline-block;
+    margin-top:10px;
+    padding:5px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+  }
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;}
+  .stat-box{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px;
+    text-align:center;
+  }
+  .stat-box .num{font-size:24px;font-weight:700;color:#fff;font-family:"Noto Serif TC",serif;}
+  .stat-box .lab{font-size:12px;color:var(--muted);margin-top:2px;}
+  .se-list{margin-top:14px;}
+  .se-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-top:1px solid var(--line);
+    font-size:13px;
+  }
+  .se-row:first-child{border-top:none;}
+  .se-row .item-text{color:var(--muted);flex:1;padding-right:10px;}
+  .se-row .item-score{color:#fff;font-weight:600;white-space:nowrap;}
+  textarea#summaryText{
+    width:100%;
+    min-height:170px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--muted);
+    font-size:12px;
+    font-family:monospace;
+    padding:10px;
+    margin-top:14px;
+    resize:vertical;
+  }
+  button.copy{
+    width:100%;
+    margin-top:10px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid var(--accent);
+    background:transparent;
+    color:var(--accent);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.copy.copied{background:var(--accent);color:#06231b;}
+  button.reset{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--muted-2);
+    font-size:13px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">學習成效評估 · Learner Experience</div>
+    <h1>GRADE / ICEMAN / AMSTAR 2<br>教學工具學習者感受問卷</h1>
+    <div class="sub">請依實際使用感受填寫,填完後會自動產生分數,請將下方結果文字複製貼給帶教藥師。</div>
+  </header>
+
+  <div class="card">
+    <h2>基本資料</h2>
+    <div class="row-2">
+      <div>
+        <label for="name">姓名</label>
+        <input type="text" id="name" placeholder="請輸入姓名">
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <label>填寫時間點</label>
+      <div class="timepoint">
+        <button type="button" data-tp="前測" class="tp-btn active">前測（介入前）</button>
+        <button type="button" data-tp="後測" class="tp-btn">後測（介入後）</button>
+        <button type="button" data-tp="保留測驗" class="tp-btn">延遲保留測驗</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>System Usability Scale<span class="tag">易用性 · 10 題</span></h2>
+    <p class="desc">
+      請以<strong style="color:var(--ink);">「實際進行系統性文獻評析、撰寫實證醫學報告等實證研究任務時,使用 GRADE / ICEMAN / AMSTAR 2 教學工具」</strong>的經驗為基準作答,而非單純瀏覽網頁介面的整體印象。以下 10 題請依直覺作答,沒有對錯。
+    </p>
+    <div id="susBlock"></div>
+  </div>
+
+  <div class="card">
+    <h2>自我效能感<span class="tag">學習信心 · 8 題</span></h2>
+    <p class="desc">
+      以下評估的前提是：<strong style="color:var(--ink);">當你實際需要進行系統性文獻評析、撰寫實證醫學報告或臨床指引評等等「實證研究任務」時</strong>,你對於能否運用 GRADE / ICEMAN / AMSTAR 2 完成判斷的信心程度 —— 評估的是「有需要時能不能用得上」,並不是平時日常工作中使用這些工具的頻率。
+    </p>
+    <div id="seBlock"></div>
+  </div>
+
+  <div class="submit-bar">
+    <button class="primary" id="submitBtn" disabled>看結果</button>
+    <div class="hint" id="hintText">尚有題目未完成</div>
+  </div>
+
+  <div id="results" class="card">
+    <h2>結果摘要</h2>
+    <div class="gauge-wrap">
+      <svg width="220" height="130" viewBox="0 0 220 130">
+        <path d="M 15 115 A 95 95 0 0 1 205 115" fill="none" stroke="#23393B" stroke-width="16" stroke-linecap="round"/>
+        <path id="gaugeArc" d="M 15 115 A 95 95 0 0 1 205 115" fill="none" stroke="#4C9A6B" stroke-width="16" stroke-linecap="round" stroke-dasharray="298" stroke-dashoffset="298"/>
+      </svg>
+      <div class="gauge-score" id="susScoreNum">0</div>
+      <div class="gauge-label">SUS 易用性分數（0–100）</div>
+      <div class="level-pill" id="levelPill">—</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat-box">
+        <div class="num" id="seAvgNum">0%</div>
+        <div class="lab">自我效能平均分數</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="seGapNum">—</div>
+        <div class="lab">最弱項目</div>
+      </div>
+    </div>
+
+    <div class="se-list" id="seList"></div>
+
+    <label style="margin-top:18px;">複製以下文字貼給帶教藥師</label>
+    <textarea id="summaryText" readonly></textarea>
+    <button class="copy" id="copyBtn">複製結果</button>
+    <button class="reset" id="resetBtn">重新填寫</button>
+  </div>
+
+</div>
+
+<script>
+const susItems = [
+  "我覺得我會頻繁使用這個教學工具",
+  "我覺得這個工具用起來不必要地複雜",
+  "我覺得這個工具很容易使用",
+  "我覺得我需要他人協助才能使用這個工具",
+  "我覺得工具裡的各項功能整合得很好",
+  "我覺得這個工具的設計有太多不一致的地方",
+  "我認為大多數人都能很快學會使用這個工具",
+  "我覺得這個工具使用起來很笨重、不順手",
+  "使用這個工具時,我感到很有自信",
+  "在能夠順利上手這個工具之前,我需要先學習很多東西"
+];
+// odd index(0-based even) = positive statement, others negative
+const susPositive = [true,false,true,false,true,false,true,false,true,false];
+const susScaleLabels = ["非常不同意","不同意","中立","同意","非常同意"];
+
+const seItems = [
+  "當我需要評析一篇文獻時,我有信心能獨立完成 GRADE 9 步驟證據等級評估",
+  "當我需要評析一篇文獻時,我有信心能正確判斷 risk of bias 是否需要降級",
+  "當我需要評析一篇文獻時,我有信心能判斷 imprecision（不精確性）是否需要降級",
+  "當我需要評估次族群分析時,我有信心能使用 ICEMAN 框架判斷 subgroup analysis 的可信度",
+  "當我需要評析一篇系統性文獻時,我有信心能使用 AMSTAR 2 之 7 個關鍵領域（critical domains）判斷其方法學信賴度",
+  "當我需要評析一篇系統性文獻時,我有信心能依 AMSTAR 2 結果給出整體可信度等級(High / Moderate / Low / Critically Low)",
+  "當我需要向其他臨床人員報告實證結果時,我有信心能說明 GRADE 證據等級的判斷理由",
+  "當實際面臨實證醫學任務時,我有信心能視需要選用 GRADE / ICEMAN / AMSTAR 2 完成評析"
+];
+const seScaleLabels = ["非常沒信心","沒信心","普通","有信心","非常有信心"];
+
+function buildScaleQuestion(name, idx, text, scaleLabels){
+  const opts = scaleLabels.map((lab,i)=>{
+    const val = i+1;
+    return `<label class="opt">
+      <input type="radio" name="${name}${idx}" value="${val}" data-group="${name}">
+      <span>${val}</span>
+    </label>`;
+  }).join("");
+  return `<div class="q">
+    <div class="qtext"><span class="qnum">${idx+1}.</span>${text}</div>
+    <div class="scale">${opts}</div>
+    <div class="endcap"><span>${scaleLabels[0]}</span><span>${scaleLabels[scaleLabels.length-1]}</span></div>
+  </div>`;
+}
+
+document.getElementById("susBlock").innerHTML = susItems.map((t,i)=>buildScaleQuestion("sus",i,t,susScaleLabels)).join("");
+document.getElementById("seBlock").innerHTML = seItems.map((t,i)=>buildScaleQuestion("se",i,t,seScaleLabels)).join("");
+
+let timepoint = "前測";
+document.querySelectorAll(".tp-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tp-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    timepoint = btn.dataset.tp;
+  });
+});
+
+const submitBtn = document.getElementById("submitBtn");
+const hintText = document.getElementById("hintText");
+
+function checkComplete(){
+  const name = document.getElementById("name").value.trim();
+  const susCount = document.querySelectorAll('input[name^="sus"]:checked').length;
+  const seCount = document.querySelectorAll('input[name^="se"]:checked').length;
+  const complete = name.length>0 && susCount===10 && seCount===8;
+  submitBtn.disabled = !complete;
+  if(!name.length) hintText.textContent = "請先填寫姓名";
+  else if(susCount<10) hintText.textContent = `易用性題目尚有 ${10-susCount} 題未完成`;
+  else if(seCount<8) hintText.textContent = `自我效能題目尚有 ${8-seCount} 題未完成`;
+  else hintText.textContent = "已完成,可送出";
+  return complete;
+}
+
+document.addEventListener("change", checkComplete);
+document.getElementById("name").addEventListener("input", checkComplete);
+
+function levelFromSUS(score){
+  if(score>=85) return {label:"優異", color:"var(--high)"};
+  if(score>=68) return {label:"高於平均", color:"var(--high)"};
+  if(score>=51) return {label:"中等", color:"var(--mod)"};
+  if(score>=30) return {label:"偏低", color:"var(--low)"};
+  return {label:"低", color:"var(--vlow)"};
+}
+
+submitBtn.addEventListener("click", ()=>{
+  if(!checkComplete()) return;
+
+  // SUS scoring
+  let susTotal = 0;
+  const susRaw = [];
+  for(let i=0;i<10;i++){
+    const val = parseInt(document.querySelector(`input[name="sus${i}"]:checked`).value,10);
+    susRaw.push(val);
+    susTotal += susPositive[i] ? (val-1) : (5-val);
+  }
+  const susScore = Math.round(susTotal*2.5);
+
+  // self-efficacy scoring
+  const seRaw = [];
+  for(let i=0;i<8;i++){
+    const val = parseInt(document.querySelector(`input[name="se${i}"]:checked`).value,10);
+    seRaw.push(val);
+  }
+  const seAvgRaw = seRaw.reduce((a,b)=>a+b,0)/seRaw.length;
+  const seAvgPct = Math.round((seAvgRaw-1)/4*100);
+
+  // weakest item
+  let minIdx = 0;
+  for(let i=1;i<seRaw.length;i++) if(seRaw[i]<seRaw[minIdx]) minIdx = i;
+  const weakestText = seItems[minIdx];
+
+  // render results
+  document.getElementById("results").style.display = "block";
+  document.getElementById("susScoreNum").textContent = susScore;
+  document.getElementById("seAvgNum").textContent = seAvgPct + "%";
+  document.getElementById("seGapNum").textContent = "第 " + (minIdx+1) + " 項";
+
+  const lvl = levelFromSUS(susScore);
+  const pill = document.getElementById("levelPill");
+  pill.textContent = "SUS 等級：" + lvl.label;
+  pill.style.background = lvl.color;
+  pill.style.color = "#06231b";
+
+  // gauge: full arc length ~298 (circumference of the path)
+  const fullLen = 298;
+  const offset = fullLen - (fullLen * susScore/100);
+  const arc = document.getElementById("gaugeArc");
+  arc.setAttribute("stroke-dashoffset", offset);
+  arc.setAttribute("stroke", lvl.color.replace("var(--high)","#4C9A6B").replace("var(--mod)","#D9A23B").replace("var(--low)","#C97A3D").replace("var(--vlow)","#B5485A"));
+
+  document.getElementById("seList").innerHTML = seItems.map((t,i)=>{
+    return `<div class="se-row"><div class="item-text">${i+1}. ${t}</div><div class="item-score">${seRaw[i]} / 5</div></div>`;
+  }).join("");
+
+  const name = document.getElementById("name").value.trim();
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+
+  const summary =
+`【GRADE / ICEMAN / AMSTAR 2 教學工具 學習者感受問卷】
+姓名：${name}
+時間點：${timepoint}
+填寫日期：${dateStr}
+
+— SUS 易用性 —
+總分：${susScore} / 100（等級：${lvl.label}）
+逐題原始分數（1-5）：${susRaw.join(", ")}
+
+— 自我效能感 —
+平均分數：${seAvgPct}%（原始平均 ${seAvgRaw.toFixed(2)} / 5）
+最弱項目：第 ${minIdx+1} 項「${weakestText}」（${seRaw[minIdx]}/5）
+逐題分數：
+${seItems.map((t,i)=>`  ${i+1}. ${t} → ${seRaw[i]}/5`).join("\n")}
+`;
+
+  document.getElementById("summaryText").value = summary;
+  document.getElementById("results").scrollIntoView({behavior:"smooth", block:"start"});
+});
+
+document.getElementById("copyBtn").addEventListener("click", ()=>{
+  const ta = document.getElementById("summaryText");
+  ta.select();
+  document.execCommand("copy");
+  const btn = document.getElementById("copyBtn");
+  btn.textContent = "已複製 ✓";
+  btn.classList.add("copied");
+  setTimeout(()=>{btn.textContent="複製結果"; btn.classList.remove("copied");}, 1800);
+});
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.getElementById("name").value = "";
+  document.getElementById("results").style.display = "none";
+  checkComplete();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+</script>
+</body>
+</html>
