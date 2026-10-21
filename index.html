@@ -16,7 +16,7 @@
   --yellow: #f39c12;
   --red: #e74c3c;
   --text: #e8eaf0;
-  --muted: #8891b4;
+  --muted: #aab4d4;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -40,10 +40,10 @@ nav {
 }
 .nav-logo-icon svg { width: 18px; height: 18px; }
 .nav-logo-text { font-size: 14px; font-weight: 700; color: var(--text); }
-.nav-logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.nav-logo-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 .nav-links { display: flex; gap: 8px; }
 .nav-link {
-  font-size: 12px; color: var(--muted); padding: 6px 12px; border-radius: 6px;
+  font-size: 13.5px; color: var(--muted); padding: 7px 14px; border-radius: 6px;
   border: 1px solid var(--border); background: var(--card); text-decoration: none;
   transition: all .15s;
 }
@@ -57,8 +57,8 @@ nav {
 }
 .hero-tag {
   display: inline-flex; align-items: center; gap: 7px;
-  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); border: 1px solid var(--border); padding: 5px 14px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--border); padding: 6px 16px;
   border-radius: 20px; margin-bottom: 22px; background: rgba(255,255,255,.02);
 }
 .hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
@@ -68,12 +68,12 @@ nav {
 }
 .hero h1 span { color: var(--accent2); }
 .hero-desc {
-  font-size: 14px; color: var(--muted); line-height: 1.8;
+  font-size: 16px; color: var(--muted); line-height: 1.9;
   max-width: 540px; margin: 0 auto 26px;
 }
 .hero-meta {
   display: flex; align-items: center; justify-content: center;
-  gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted);
+  gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--muted);
 }
 .hero-meta-item { display: flex; align-items: center; gap: 6px; }
 .hero-meta-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
@@ -147,11 +147,129 @@ nav {
 .cta-iceman { color: var(--accent2); }
 .cta-amstar { color: var(--green); }
 
+/* ── EBM Roadmap ── */
+.framework-section { padding: 44px 24px 8px; }
+.framework-intro {
+  max-width: 700px; margin: 0 auto 36px; text-align: center;
+}
+.framework-intro p { font-size: 15px; color: var(--muted); line-height: 1.9; }
+.framework-intro .cite { font-size: 12.5px; color: var(--muted); opacity: .85; margin-top: 8px; }
+
+.roadmap {
+  position: relative; max-width: 880px; margin: 0 auto; padding: 10px 0 20px;
+}
+.roadmap-svg {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+.roadmap-path {
+  fill: none; stroke: var(--border); stroke-width: 3; stroke-dasharray: 2 10; stroke-linecap: round;
+}
+.roadmap-path.lit {
+  stroke: var(--accent2); stroke-dasharray: none; opacity: .55;
+}
+
+.roadmap-stations { position: relative; z-index: 1; }
+.station-link { display: block; width: 58%; margin-bottom: 46px; position: relative; }
+.station-link:nth-child(odd)  { margin-left: 0; }
+.station-link:nth-child(even) { margin-left: 42%; }
+.station {
+  display: flex; align-items: center; gap: 20px;
+}
+.station-link:nth-child(even) .station { flex-direction: row-reverse; text-align: right; }
+
+.station-marker {
+  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--surface); border: 3px solid var(--border); color: var(--muted);
+  font-weight: 900; transition: all .2s; position: relative;
+}
+.station-marker .m-num { font-size: 20px; line-height: 1; }
+.station-marker .m-flag { font-size: 13px; margin-top: 1px; }
+.station.is-active .station-marker {
+  background: linear-gradient(150deg, var(--accent2), #5b3fa0);
+  border-color: var(--accent2); color: #fff;
+  box-shadow: 0 0 0 6px rgba(124,92,191,.16), 0 6px 18px rgba(124,92,191,.35);
+}
+.station-marker .m-pulse {
+  position: absolute; inset: -3px; border-radius: 50%;
+  border: 2px solid var(--accent2); opacity: 0;
+}
+.station.is-active .m-pulse { animation: pulse-ring 2.4s ease-out infinite; }
+@keyframes pulse-ring {
+  0%   { opacity: .6; transform: scale(1); }
+  100% { opacity: 0;  transform: scale(1.45); }
+}
+
+.station-card {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 17px 19px;
+}
+.station.is-active .station-card { border-color: rgba(124,92,191,.4); background: linear-gradient(160deg, rgba(124,92,191,.08), var(--card)); }
+.station-en { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .4px; }
+.station-zh { font-size: 14px; color: var(--accent2); font-weight: 700; margin-top: 2px; }
+.station:not(.is-active) .station-zh { color: #c2cae8; }
+.station-desc { font-size: 14px; color: var(--muted); line-height: 1.75; margin-top: 9px; }
+.station-badge {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 11px;
+  font-size: 12px; font-weight: 800; letter-spacing: .3px;
+  padding: 5px 12px; border-radius: 10px; text-transform: uppercase;
+}
+.station-badge.ready { background: #4ade80; color: #0a2818; border: 2px solid #1b7a4a; }
+.station-badge.soon  { background: #3a4060; color: #e8eaf0; border: 1px solid var(--border); }
+
+.station-link { text-decoration: none; color: inherit; display: block; }
+.station-link.is-locked { cursor: default; }
+.station-link:not(.is-locked) .station-card { transition: all .2s; cursor: pointer; }
+.station-link:not(.is-locked):hover .station-card {
+  border-color: var(--accent2); transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124,92,191,.18);
+}
+.station-link:not(.is-locked):hover .station-marker {
+  border-color: var(--accent2); color: var(--accent2);
+}
+.station-go {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 11px; margin-left: 8px;
+  font-size: 13px; font-weight: 700; color: var(--accent2);
+}
+
+@media(max-width: 720px) {
+  .roadmap-svg { display: none; }
+  .station-link, .station-link:nth-child(even) {
+    width: 100%; margin-left: 0;
+  }
+  .station-link:nth-child(even) .station { flex-direction: row; text-align: left; }
+  .station-marker { width: 52px; height: 52px; }
+  .station-marker .m-num { font-size: 16px; }
+  .station-link::after {
+    content: ''; position: absolute; left: 26px; top: 64px; bottom: -46px;
+    width: 2px; background: repeating-linear-gradient(to bottom, var(--border) 0 6px, transparent 6px 12px);
+  }
+  .station-link:last-child::after { display: none; }
+  .station-link:has(.is-active)::after { background: var(--accent2); opacity: .4; }
+}
+
+.appraise-divider {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 1000px; margin: 50px auto 24px; padding: 0 24px;
+}
+.appraise-divider::before, .appraise-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.appraise-divider-label {
+  font-size: 14px; font-weight: 700; color: var(--accent2);
+  white-space: nowrap; display: flex; align-items: center; gap: 8px;
+}
+.appraise-divider-label .num-badge {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--accent2);
+  color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+
 /* ── Footer ── */
 footer {
-  padding: 16px 24px; border-top: 1px solid var(--border);
+  padding: 18px 24px; border-top: 1px solid var(--border);
   background: var(--surface); text-align: center;
-  font-size: 12px; color: var(--muted);
+  font-size: 13.5px; color: var(--muted); line-height: 1.8;
 }
 footer b { color: var(--text); }
 footer a { color: var(--accent); text-decoration: none; }
@@ -187,7 +305,7 @@ footer a:hover { text-decoration: underline; }
 <section class="hero">
   <div class="hero-tag"><div class="hero-tag-dot"></div>持續更新中 · 2025</div>
   <h1>EBM <span>互動教學</span>工具套組</h1>
-  <p class="hero-desc">整合 Core GRADE、ICEMAN、AMSTAR 2 三大評估框架，提供中英對照、逐步引導、即時評分的臨床藥師 EBM 教學工具。</p>
+  <p class="hero-desc">完整實證醫學（EBM）流程教學平台，目前提供 Appraise（嚴格評讀）階段的 Core GRADE、ICEMAN、AMSTAR 2 三大工具，採中英對照、逐步引導、即時評分設計。</p>
   <div class="hero-meta">
     <div class="hero-meta-item">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
@@ -200,75 +318,95 @@ footer a:hover { text-decoration: underline; }
   </div>
 </section>
 
-<div class="stats">
-  <div class="stat"><div class="stat-num">3</div><div class="stat-lbl">互動教學工具</div></div>
-  <div class="stat"><div class="stat-num">BMJ 2025</div><div class="stat-lbl">最新文獻依據</div></div>
-  <div class="stat"><div class="stat-num">繁中</div><div class="stat-lbl">中英對照教材</div></div>
-  <div class="stat"><div class="stat-num">單檔</div><div class="stat-lbl">無需安裝</div></div>
-</div>
+<section class="framework-section">
+  <div class="framework-intro">
+    <p>實證醫學從臨床困惑到找到答案，遵循 McMaster 大學發展的 <b style="color:var(--text);">5A 流程</b>：
+    Ask（提出問題）→ Acquire（搜尋證據）→ Appraise（嚴格評讀）→ Apply（應用於病人）→ Assess（自我評估）。
+    點擊下方任一步驟，了解該階段的核心任務與可用工具。</p>
+    <div class="cite">Straus SE, et al. Evidence-Based Medicine: How to Practice and Teach EBM.</div>
+  </div>
 
-<section class="tools-section">
-  <div class="section-label">三大評估工具</div>
-  <div class="tools-grid">
+  <div class="roadmap">
+    <svg class="roadmap-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path class="roadmap-path" d="M 29 6 C 60 14, 60 24, 29 32 C -2 40, -2 50, 29 58 C 60 66, 60 76, 29 84" vector-effect="non-scaling-stroke"/>
+      <path class="roadmap-path lit" d="M 29 6 C 60 14, 60 24, 29 32" vector-effect="non-scaling-stroke"/>
+    </svg>
 
-    <a class="tool-card tool-grade" href="grade/">
-      <div class="tool-top">
-        <div class="tool-icon icon-grade">⚕</div>
-        <span class="tool-badge badge-bmj">BMJ 2025</span>
+    <div class="roadmap-stations">
+      <div class="station-link is-locked">
+        <div class="station">
+          <div class="station-marker">
+            <div class="m-num">1</div>
+            <div class="m-flag">🚩</div>
+          </div>
+          <div class="station-card">
+            <div class="station-en">ASK</div>
+            <div class="station-zh">提出問題</div>
+            <div class="station-desc">用 PICO 將臨床困惑轉換為結構化、可回答的問題。</div>
+            <div class="station-badge soon">教材籌備中</div>
+          </div>
+        </div>
       </div>
-      <div class="tool-name">Core GRADE</div>
-      <div class="tool-name-zh">證據確定性評分工具</div>
-      <p class="tool-desc">逐步引導完成 9 個步驟的 GRADE 評分流程，支援多個 Outcome 獨立評分，內含 5 份繁體中文教材重點，自動產生 Summary of Findings Table。</p>
-      <div class="tool-tags">
-        <span class="tool-tag">RCT / NRSI</span>
-        <span class="tool-tag">5 降級領域</span>
-        <span class="tool-tag">OIS 引導</span>
-        <span class="tool-tag">MID / Null 閾值</span>
-      </div>
-      <div class="tool-cta">
-        <span class="tool-cta-text cta-grade">開啟 GRADE 工具</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-grade"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-      </div>
-    </a>
 
-    <a class="tool-card tool-iceman" href="iceman/">
-      <div class="tool-top">
-        <div class="tool-icon icon-iceman">🔬</div>
-        <span class="tool-badge badge-cmaj">CMAJ 2020</span>
+      <div class="station-link is-locked">
+        <div class="station">
+          <div class="station-marker">
+            <div class="m-num">2</div>
+          </div>
+          <div class="station-card">
+            <div class="station-en">ACQUIRE</div>
+            <div class="station-zh">搜尋證據</div>
+            <div class="station-desc">依證據金字塔搜尋：指引／系統性回顧 → RCT → 觀察性研究。</div>
+            <div class="station-badge soon">教材籌備中</div>
+          </div>
+        </div>
       </div>
-      <div class="tool-name">ICEMAN</div>
-      <div class="tool-name-zh">效果修飾分析可信度評估</div>
-      <p class="tool-desc">評估 Subgroup Analysis 與 Meta-regression 的可信度，涵蓋 9 個評估項目，自動計算建議等級（Very Low → High）。</p>
-      <div class="tool-tags">
-        <span class="tool-tag">Subgroup Analysis</span>
-        <span class="tool-tag">A priori 假說</span>
-        <span class="tool-tag">交互作用 P 值</span>
-      </div>
-      <div class="tool-cta">
-        <span class="tool-cta-text cta-iceman">開啟 ICEMAN 工具</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-iceman"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-      </div>
-    </a>
 
-    <a class="tool-card tool-amstar" href="amstar/">
-      <div class="tool-top">
-        <div class="tool-icon icon-amstar">📋</div>
-        <span class="tool-badge badge-amstar">AMSTAR 2</span>
-      </div>
-      <div class="tool-name">AMSTAR 2</div>
-      <div class="tool-name-zh">系統性回顧品質評估</div>
-      <p class="tool-desc">評估 SR 方法學品質，涵蓋 16 個評估項目（含 7 個關鍵項目），自動計算整體品質等級，支援 RCT 與 NRSI 混合設計。</p>
-      <div class="tool-tags">
-        <span class="tool-tag">16 評估項目</span>
-        <span class="tool-tag">7 關鍵項目</span>
-        <span class="tool-tag">品質分級</span>
-      </div>
-      <div class="tool-cta">
-        <span class="tool-cta-text cta-amstar">開啟 AMSTAR 工具</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-amstar"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-      </div>
-    </a>
+      <a class="station-link" href="appraise.html">
+        <div class="station is-active">
+          <div class="station-marker">
+            <div class="m-pulse"></div>
+            <div class="m-num">3</div>
+          </div>
+          <div class="station-card">
+            <div class="station-en">APPRAISE</div>
+            <div class="station-zh">嚴格評讀</div>
+            <div class="station-desc">AMSTAR 2 評讀方法學品質、ICEMAN 評讀亞組可信度、Core GRADE 評讀證據確定性。</div>
+            <div class="station-badge ready">● 3 個工具可用</div>
+            <span class="station-go">查看工具 →</span>
+          </div>
+        </div>
+      </a>
 
+      <div class="station-link is-locked">
+        <div class="station">
+          <div class="station-marker">
+            <div class="m-num">4</div>
+          </div>
+          <div class="station-card">
+            <div class="station-en">APPLY</div>
+            <div class="station-zh">應用於病人</div>
+            <div class="station-desc">納入病人價值觀、偏好與資源，整合臨床專業判斷。</div>
+            <div class="station-badge soon">教材籌備中</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="station-link is-locked">
+        <div class="station">
+          <div class="station-marker">
+            <div class="m-num">5</div>
+            <div class="m-flag">🏁</div>
+          </div>
+          <div class="station-card">
+            <div class="station-en">ASSESS</div>
+            <div class="station-zh">自我評估</div>
+            <div class="station-desc">回顧病人結果與決策過程，作為下次精進的養分。</div>
+            <div class="station-badge soon">教材籌備中</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
