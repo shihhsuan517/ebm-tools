@@ -266,6 +266,12 @@
   <!-- Sidebar -->
   <aside>
     <div class="nav-section">
+      <button class="nav-item" onclick="window.location.href='../appraise.html'" style="color:var(--accent);border:1px solid var(--border);margin-bottom:4px;">
+        <span class="step-icon" style="background:var(--accent);color:#fff;">🏠</span> 回評讀工具頁
+      </button>
+      <button class="nav-item" onclick="window.location.href='https://shihhsuan517.github.io/ebm-tools/'" style="color:var(--muted);border:1px solid var(--border);margin-bottom:8px;">
+        <span class="step-icon">⌂</span> 回 EBM 首頁
+      </button>
       <div class="nav-label">📋 評分流程</div>
       <button class="nav-item active" onclick="goStep(-1)" id="nav-1">
         <span class="step-icon" id="icon-1">📖</span> GRADE 總覽
@@ -314,6 +320,10 @@
 
     <!-- Step -1: GRADE Overview -->
     <div class="screen active" id="screen-1">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="window.location.href='../appraise.html'" style="font-size:13px;padding:6px 16px;">🏠 回評讀工具頁</button>
+        <button class="btn btn-ghost" onclick="window.location.href='https://shihhsuan517.github.io/ebm-tools/'" style="font-size:13px;padding:6px 16px;">⌂ 回 EBM 首頁</button>
+      </div>
       <div class="card">
         <h2>📖 Core GRADE 方法總覽</h2>
         <p>在開始逐步評分前，請先建立 GRADE 的整體框架概念。本頁摘錄自 Guyatt et al., <i>BMJ</i> 2025;389:e081903（Core GRADE 1）。</p>
